@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>Trợ lý Handfree — Giao Thông 365 v2.5</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-center {
+      content: "Trợ lý Handfree — Giao Thông 365 v2.5  ·  Trang " counter(page) " / " counter(pages);
+      font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+      font-size: 9pt;
+      color: #888;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    font-family: -apple-system, "Helvetica Neue", "Segoe UI", "Noto Sans", Arial, sans-serif;
+    color: #1f2937;
+    font-size: 10.5pt;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+  }
+  h1, h2, h3, h4 {
+    color: #0f172a;
+    line-height: 1.25;
+    margin-top: 1.2em;
+    margin-bottom: 0.45em;
+    page-break-after: avoid;
+  }
+  h1 { font-size: 26pt; border-bottom: 3px solid #2563eb; padding-bottom: 6px; }
+  h2 { font-size: 17pt; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-top: 1.6em; }
+  h3 { font-size: 13pt; color: #1e40af; }
+  h4 { font-size: 11pt; color: #334155; }
+  p  { margin: 0 0 0.55em 0; text-align: justify; }
+  ul, ol { margin: 0 0 0.6em 1.2em; padding: 0; }
+  li { margin-bottom: 0.18em; }
+
+  code, .mono {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9.5pt;
+    background: #f1f5f9;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #0f172a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.6em 0 1.1em 0;
+    font-size: 9.5pt;
+    page-break-inside: auto;
+  }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; }
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 6px 8px;
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    background: #1e3a8a;
+    color: #fff;
+    font-weight: 600;
+    font-size: 9.5pt;
+  }
+  tr:nth-child(even) td { background: #f8fafc; }
+
+  .cover {
+    height: 252mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    page-break-after: always;
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #06b6d4 100%);
+    color: #fff;
+    margin: -18mm -16mm 0 -16mm;
+    padding: 40mm 20mm;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 10pt;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    color: #fff;
+    border: none;
+    font-size: 40pt;
+    margin: 0 0 12px 0;
+    line-height: 1.1;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .cover .sub {
+    font-size: 14pt;
+    opacity: 0.95;
+    max-width: 140mm;
+    margin: 0 auto 28px auto;
+  }
+  .cover .meta {
+    font-size: 10pt;
+    opacity: 0.85;
+    margin-top: auto;
+  }
+
+  .toc {
+    page-break-after: always;
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; counter-reset: tocItem; }
+  .toc li { counter-increment: tocItem; padding: 5px 0; border-bottom: 1px dotted #cbd5e1; }
+  .toc li::before { content: counter(tocItem) ". "; color: #2563eb; font-weight: 600; }
+
+  .callout {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .callout.warn { background: #fff7ed; border-left-color: #f97316; }
+  .callout.danger { background: #fef2f2; border-left-color: #dc2626; }
+  .callout .label {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #2563eb;
+    margin-right: 6px;
+  }
+  .callout.warn .label { color: #c2410c; }
+  .callout.danger .label { color: #b91c1c; }
+
+  .scene {
+    display: flex;
+    gap: 14px;
+    margin: 14px 0 22px 0;
+    page-break-inside: avoid;
+    align-items: flex-start;
+  }
+  .scene .shot {
+    flex: 0 0 56mm;
+  }
+  .scene .shot img {
+    width: 56mm;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(15,23,42,0.18);
+    display: block;
+  }
+  .scene .shot .caption {
+    font-size: 8.5pt;
+    color: #64748b;
+    text-align: center;
+    margin-top: 6px;
+    font-style: italic;
+  }
+  .scene .body { flex: 1; }
+
+  .dialog {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    font-size: 9.8pt;
+  }
+  .dialog .turn { margin: 4px 0; }
+  .dialog .who {
+    display: inline-block;
+    width: 70px;
+    font-weight: 700;
+    font-size: 8.5pt;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .dialog .user .who { color: #1d4ed8; }
+  .dialog .bot  .who { color: #047857; }
+  .dialog .sys  .who { color: #b45309; font-style: italic; }
+  .dialog .sys  { color: #78716c; font-style: italic; font-size: 9.2pt; }
+
+  .pillrow { margin: 6px 0 10px 0; }
+  .pill {
+    display: inline-block;
+    background: #e0e7ff;
+    color: #1e3a8a;
+    border-radius: 999px;
+    padding: 2px 9px;
+    font-size: 8.8pt;
+    margin: 2px 4px 2px 0;
+    font-family: "JetBrains Mono", Menlo, monospace;
+  }
+  .pill.danger { background: #fee2e2; color: #991b1b; }
+  .pill.warn   { background: #fef3c7; color: #92400e; }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 12px 0;
+  }
+  .grid2 figure { margin: 0; text-align: center; }
+  .grid2 img { width: 100%; max-width: 70mm; border:1px solid #cbd5e1; border-radius:8px; box-shadow: 0 4px 14px rgba(15,23,42,0.15); }
+  .grid2 figcaption { font-size: 8.8pt; color:#64748b; margin-top: 6px; }
+
+  .arch {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: "JetBrains Mono", Menlo, monospace;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    white-space: pre;
+    margin: 10px 0;
+  }
+
+  .section { page-break-before: always; }
+  .nopagebreak { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ============== COVER ============== -->
+<div class="cover">
+  <span class="badge">TÀI LIỆU SẢN PHẨM · v2.5</span>
+  <h1>Trợ lý Handfree</h1>
+  <div class="sub">Điều khiển toàn bộ ứng dụng <strong>Giao Thông 365</strong> bằng giọng nói tiếng Việt — không chạm, không rời mắt khỏi đường.</div>
+  <div style="font-size:11pt;opacity:0.9;max-width:120mm;">
+    Tài liệu này dành cho mọi đối tượng (BA, PM, QA, Dev, người dùng cuối) muốn hiểu rõ trợ lý ảo handfree
+    hoạt động như thế nào trên app Giao Thông 365 phiên bản 2.5.
+  </div>
+  <div class="meta">
+    Phát hành nội bộ &middot; GT365 Handfree MVP &middot; Tháng 5 / 2026
+  </div>
+</div>
+
+<!-- ============== TOC ============== -->
+<div class="toc">
+  <h1>Mục lục</h1>
+  <ol>
+    <li>Trợ lý Handfree là gì?</li>
+    <li>Vì sao cần Handfree khi lái xe?</li>
+    <li>Tổng quan luồng giao tiếp</li>
+    <li>Vòng đời một lệnh thoại</li>
+    <li>Kích hoạt &amp; tắt trợ lý</li>
+    <li>Danh sách lệnh đầy đủ (mã lệnh)</li>
+    <li>Kịch bản hội thoại mẫu theo màn hình</li>
+    <li>Lớp an toàn — Confirm &amp; chặn lệnh nguy hiểm</li>
+    <li>Đa ngôn ngữ &amp; chuẩn hoá tiếng Việt</li>
+    <li>Câu hỏi thường gặp (FAQ)</li>
+    <li>Phụ lục: thuật ngữ</li>
+  </ol>
+</div>
+
+<!-- ============== 1 ============== -->
+<div class="section">
+<h1>1. Trợ lý Handfree là gì?</h1>
+
+<p>
+  <strong>Trợ lý Handfree</strong> là tính năng cho phép tài xế điều khiển toàn bộ
+  ứng dụng <strong>Giao Thông 365 v2.5</strong> bằng <strong>giọng nói tiếng Việt</strong>:
+  chuyển màn hình, đặt &amp; xoá lộ trình, tra cứu phạt nguội, phát radio, gọi cứu hộ,
+  báo sự cố giao thông… tất cả mà không cần chạm tay vào màn hình.
+</p>
+
+<p>
+  Trợ lý gồm hai phần phối hợp:
+</p>
+<ul>
+  <li><strong>Tai (ASR)</strong> — nghe và biên dịch tiếng Việt thành văn bản theo thời gian thực.</li>
+  <li><strong>Miệng (TTS)</strong> — đọc lại phản hồi bằng giọng nữ <em>phuongnhi-north</em>.</li>
+</ul>
+
+<p>
+  Ở giữa là <strong>bộ não lệnh (Voice Engine)</strong> — quyết định câu nói của tài xế
+  ứng với hành động nào, có an toàn để thực hiện ngay không, hay cần xác nhận lại.
+</p>
+
+<div class="callout">
+  <span class="label">Tóm tắt 1 dòng</span>
+  Tài xế nói &nbsp;→&nbsp; ASR ghi lời &nbsp;→&nbsp; Engine khớp lệnh &nbsp;→&nbsp; App thực thi &nbsp;→&nbsp; TTS phản hồi.
+</div>
+
+<h2>Đối tượng sử dụng</h2>
+<table>
+  <tr><th style="width:35%">Đối tượng</th><th>Họ dùng Handfree để…</th></tr>
+  <tr><td>Tài xế ô tô cá nhân</td><td>Điều hướng app khi đang lái, không rời tay khỏi vô lăng.</td></tr>
+  <tr><td>Lái xe dịch vụ / vận tải</td><td>Tra cứu phạt nguội, mở radio, báo sự cố nhanh chóng.</td></tr>
+  <tr><td>Người khiếm thị / hạn chế thao tác</td><td>Truy cập tiện ích bằng giọng nói thay cho cảm ứng.</td></tr>
+</table>
+</div>
+
+<!-- ============== 2 ============== -->
+<div class="section">
+<h1>2. Vì sao cần Handfree khi lái xe?</h1>
+
+<div class="grid2">
+  <figure>
+    <img src="assets/screens/welcome.png" alt="Welcome" />
+    <figcaption>Màn hình Welcome — onboarding của app GT365 v2.5</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/screens/onboarding-3.png" alt="Onboarding handfree" />
+    <figcaption>Onboarding giới thiệu chế độ điều khiển bằng giọng nói</figcaption>
+  </figure>
+</div>
+
+<p>
+  Khi đang lái xe, tài xế <strong>không thể</strong> (và không nên) cầm điện thoại để vuốt, gõ, chọn.
+  Mọi giây mất tập trung đều có thể gây ra tai nạn. Trợ lý Handfree giải bài toán này bằng cách
+  biến mọi tác vụ phổ biến trong app GT365 thành <strong>một câu nói tự nhiên</strong>.
+</p>
+
+<h3>Ba mục tiêu thiết kế</h3>
+<ol>
+  <li><strong>An toàn trên hết</strong> — các thao tác có thể gây hậu quả (xoá lộ trình, gửi báo cáo) đều có lớp xác nhận.</li>
+  <li><strong>Phản hồi tức thời</strong> — hiển thị transcript dần dần để tài xế biết app đang nghe đúng, kèm phản hồi bằng giọng nói.</li>
+  <li><strong>Không nhập nhằng</strong> — cùng một câu chỉ kích hoạt hành động phù hợp với màn hình hiện tại.</li>
+</ol>
+
+<div class="callout warn">
+  <span class="label">Nguyên tắc vàng</span>
+  Trợ lý <em>không bao giờ</em> tự ý thực hiện hành động không an toàn. Khi không chắc chắn, nó hỏi lại.
+</div>
+</div>
+
+<!-- ============== 3 ============== -->
+<div class="section">
+<h1>3. Tổng quan luồng giao tiếp</h1>
+
+<p>Hệ thống chia làm 3 tầng rõ ràng:</p>
+
+<div class="arch">
+┌──────────────────────────┐      ┌──────────────────────────┐      ┌──────────────────────────┐
+│   App GT365 (Browser)    │      │   Voice Bridge (Server)  │      │   Dịch vụ giọng nói      │
+│   React 19 + Vite        │      │   Node.js + WebSocket    │      │   bên ngoài (upstream)   │
+│                          │      │                          │      │                          │
+│  Mic ──► PCM 16kHz ──────┼─WS──►│  /ws/asr  ──► gRPC ──────┼─────►│  ASR  (nhận diện giọng) │
+│                          │      │                          │      │                          │
+│  Transcript  ◄───────────┼──────┤    JSON từ ASR           │◄─────┤  text + interim          │
+│                          │      │                          │      │                          │
+│  Câu phản hồi ──►────────┼─WS──►│  /ws/tts  ──► WS ────────┼─────►│  TTS  (sinh giọng)       │
+│                          │      │                          │      │                          │
+│  PCM audio  ◄────────────┼──────┤   audio base64           │◄─────┤  giọng phuongnhi-north  │
+│  (Web Audio API phát)    │      │                          │      │                          │
+└──────────────────────────┘      └──────────────────────────┘      └──────────────────────────┘
+</div>
+
+<p>
+  <strong>Tại sao cần Voice Bridge ở giữa?</strong>
+</p>
+<ul>
+  <li><strong>Bảo mật:</strong> token ASR và API key TTS chỉ tồn tại ở server, không lộ ra phía trình duyệt.</li>
+  <li><strong>Chuyển giao protocol:</strong> ASR upstream dùng gRPC (browser không gọi trực tiếp được), bridge dịch sang WebSocket cho FE.</li>
+  <li><strong>Kiểm soát:</strong> tập trung log, rate-limit, timeout ở một chỗ.</li>
+</ul>
+</div>
+
+<!-- ============== 4 ============== -->
+<div class="section">
+<h1>4. Vòng đời một lệnh thoại</h1>
+
+<p>Lấy ví dụ: tài xế đang ở <strong>Trang chủ</strong> và nói <em>“Mở radio”</em>. Bên dưới là 16 bước xảy ra trong khoảng 1–2 giây:</p>
+
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/home.png" alt="Trang chủ" />
+    <div class="caption">Bắt đầu: tài xế đang ở Trang chủ</div>
+  </div>
+  <div class="body">
+    <ol>
+      <li>Tài xế nhấn nút mic (hoặc trợ lý đã được kích hoạt sẵn).</li>
+      <li>App lấy âm thanh từ mic, hạ tần số xuống 16 kHz, đóng gói thành PCM 16-bit little-endian.</li>
+      <li>Frontend gửi audio qua <span class="mono">WS /ws/asr</span> tới Voice Bridge.</li>
+      <li>Bridge mở stream gRPC tới ASR upstream, kèm token và metadata (timeout, ngôn ngữ).</li>
+      <li>ASR liên tục trả về transcript dạng <em>interim</em> (tạm) và <em>final</em> (chốt).</li>
+      <li>App hiển thị transcript ngay trên Assistant Overlay để tài xế biết “máy đang nghe đúng”.</li>
+      <li>Khi có transcript final, bộ chuẩn hoá tiếng Việt loại dấu/lower/trim.</li>
+      <li>Matcher tính điểm khớp giữa câu nói và từng <em>phrase</em> trong tập lệnh ~65 lệnh.</li>
+      <li>Lệnh có điểm cao nhất (≥ ngưỡng) được chọn → trả ra <strong>Intent Code</strong>.</li>
+      <li>Bộ <em>screenActions</em> kiểm tra: intent này có hợp lệ trên màn hình hiện tại không?</li>
+      <li>Nếu hợp lệ + an toàn → dispatch action. Nếu cần xác nhận → vào trạng thái <span class="mono">confirming</span>.</li>
+      <li>App chuyển sang màn hình Radio.</li>
+      <li>Engine sinh câu phản hồi: <em>“Đã mở radio”</em>.</li>
+      <li>Câu này gửi qua <span class="mono">WS /ws/tts</span> tới Bridge, rồi tới TTS upstream.</li>
+      <li>TTS stream về các chunk audio base64.</li>
+      <li>Web Audio API decode &amp; phát ra loa.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="callout">
+  <span class="label">Độ trễ điển hình</span>
+  Từ lúc tài xế nói xong đến khi nghe phản hồi: <strong>khoảng 600–1200 ms</strong> tuỳ mạng.
+</div>
+</div>
+
+<!-- ============== 5 ============== -->
+<div class="section">
+<h1>5. Kích hoạt &amp; tắt trợ lý</h1>
+
+<table>
+  <tr><th style="width:25%">Trạng thái</th><th>Ý nghĩa</th><th>Cách vào</th></tr>
+  <tr><td><strong>idle</strong></td><td>Trợ lý đang ngủ, không nghe.</td><td>Mặc định khi mở app, hoặc sau khi nói “Đóng trợ lý”.</td></tr>
+  <tr><td><strong>listening</strong></td><td>Đang nghe và stream audio.</td><td>Bấm nút mic, hoặc nói “Mở trợ lý” / “GT365 ơi”.</td></tr>
+  <tr><td><strong>thinking</strong></td><td>Đã nhận transcript, đang khớp lệnh.</td><td>Tự động sau khi có final transcript.</td></tr>
+  <tr><td><strong>speaking</strong></td><td>TTS đang đọc phản hồi.</td><td>Sau khi action thực thi xong.</td></tr>
+  <tr><td><strong>confirming</strong></td><td>Đợi tài xế xác nhận lại lệnh nguy hiểm.</td><td>Khi gặp action có <span class="mono">dangerLevel = confirm</span>.</td></tr>
+</table>
+
+<h2>Lệnh kích hoạt &amp; tắt</h2>
+<table>
+  <tr><th>Mã lệnh</th><th>Câu mẫu</th><th>Tác dụng</th></tr>
+  <tr><td><span class="pill">ASSISTANT_WAKE</span></td><td>“Mở trợ lý”, “Nghe lệnh”, “GT365 ơi”, “Bật trợ lý”</td><td>Đánh thức và bắt đầu nghe.</td></tr>
+  <tr><td><span class="pill">ASSISTANT_CLOSE</span></td><td>“Đóng trợ lý”, “Dừng nghe”, “Thoát trợ lý”</td><td>Đưa về trạng thái idle.</td></tr>
+  <tr><td><span class="pill">ASSISTANT_HELP</span></td><td>“Trợ giúp”, “Có thể nói gì”, “Hướng dẫn lệnh”</td><td>Đọc danh sách gợi ý ở màn hình hiện tại.</td></tr>
+</table>
+
+<h3>Yêu cầu quyền</h3>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/permission-mic.png" alt="Truy cập Micro" />
+    <div class="caption">Yêu cầu quyền truy cập Micro lần đầu</div>
+  </div>
+  <div class="body">
+    <p>Lần đầu kích hoạt, app sẽ xin <strong>quyền Micro</strong>. Nếu tài xế từ chối,
+    trợ lý không thể nghe — chỉ còn thao tác chạm. Quyền có thể bật lại sau ở
+    <em>Tài khoản → Quyền truy cập</em>.</p>
+    <p>Quyền <strong>Vị trí</strong> không bắt buộc cho riêng trợ lý, nhưng cần thiết cho lộ trình
+    và cảnh báo điểm nóng.</p>
+  </div>
+</div>
+</div>
+
+<!-- ============== 6 ============== -->
+<div class="section">
+<h1>6. Danh sách lệnh đầy đủ (mã lệnh)</h1>
+
+<p>Tổng cộng <strong>65 mã lệnh (intent code)</strong>, gom theo nhóm nghiệp vụ. Cột
+  <em>An toàn</em> cho biết có cần xác nhận lại không:</p>
+
+<div class="pillrow">
+  <span class="pill">safe</span> Thực hiện ngay &nbsp;&nbsp;
+  <span class="pill warn">confirm</span> Hỏi “Đồng ý / Hủy” trước khi làm &nbsp;&nbsp;
+  <span class="pill danger">blocked</span> Chặn khi đang lái
+</div>
+
+<h3>6.1 Trợ lý</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">ASSISTANT_WAKE</span></td><td>mở trợ lý · nghe lệnh · gt365 ơi · bật trợ lý</td><td>safe</td></tr>
+  <tr><td><span class="pill">ASSISTANT_CLOSE</span></td><td>đóng trợ lý · dừng nghe · thoát trợ lý</td><td>safe</td></tr>
+  <tr><td><span class="pill">ASSISTANT_HELP</span></td><td>trợ giúp · có thể nói gì · hướng dẫn lệnh · lệnh hỗ trợ</td><td>safe</td></tr>
+</table>
+
+<h3>6.2 Điều hướng màn hình</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">NAV_HOME</span></td><td>về trang chủ · mở trang chủ · trang chủ</td><td>safe</td></tr>
+  <tr><td><span class="pill">NAV_RADIO</span></td><td>mở radio · vào radio · mở nội dung số · nghe radio</td><td>safe</td></tr>
+  <tr><td><span class="pill">NAV_UTILITIES</span></td><td>mở tiện ích · vào tiện ích · dịch vụ tiện ích</td><td>safe</td></tr>
+  <tr><td><span class="pill">NAV_COMMUNITY</span></td><td>mở cộng đồng · vào cộng đồng · xem cộng đồng</td><td>safe</td></tr>
+  <tr><td><span class="pill">NAV_PROFILE</span></td><td>mở tài khoản · vào tài khoản · mở profile · hồ sơ của tôi</td><td>safe</td></tr>
+  <tr><td><span class="pill">NAV_NOTIFICATIONS</span></td><td>mở thông báo · xem thông báo · thông báo</td><td>safe</td></tr>
+  <tr><td><span class="pill">NAV_BACK</span></td><td>quay lại · trở lại · lùi lại</td><td>safe</td></tr>
+</table>
+
+<h3>6.3 Cuộn &amp; chọn trong danh sách</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">LIST_SCROLL_DOWN</span></td><td>cuộn xuống · kéo xuống · xem thêm bên dưới</td><td>safe</td></tr>
+  <tr><td><span class="pill">LIST_SCROLL_UP</span></td><td>cuộn lên · kéo lên · xem bên trên</td><td>safe</td></tr>
+  <tr><td><span class="pill">LIST_SELECT_1</span></td><td>chọn mục đầu tiên · chọn mục số một · chọn cái đầu tiên</td><td>safe</td></tr>
+  <tr><td><span class="pill">LIST_SELECT_2</span></td><td>chọn mục thứ hai · chọn mục số hai · chọn cái thứ hai</td><td>safe</td></tr>
+</table>
+
+<h3>6.4 Lộ trình</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">ROUTE_OPEN</span></td><td>nhập lộ trình · mở lộ trình · đặt lộ trình</td><td>safe</td></tr>
+  <tr><td><span class="pill">ROUTE_SET_HN_LS</span></td><td>đặt lộ trình từ hà nội đến lạng sơn · đi từ hà nội đến lạng sơn</td><td>safe</td></tr>
+  <tr><td><span class="pill">ROUTE_EDIT_ORIGIN</span></td><td>đổi điểm đi · sửa điểm đi</td><td>safe</td></tr>
+  <tr><td><span class="pill">ROUTE_EDIT_DESTINATION</span></td><td>đổi điểm đến · sửa điểm đến</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">ROUTE_CLEAR</span></td><td>xóa lộ trình · bỏ lộ trình · hủy lộ trình</td><td>confirm</td></tr>
+</table>
+
+<h3>6.5 Cảnh báo &amp; lái xe</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">DRIVE_READ_ALERTS</span></td><td>có gì phía trước · phía trước có gì · đọc cảnh báo phía trước</td><td>safe</td></tr>
+  <tr><td><span class="pill">DRIVE_REPEAT_ALERT</span></td><td>nhắc lại cảnh báo · đọc lại cảnh báo</td><td>safe</td></tr>
+  <tr><td><span class="pill">SETTING_SPEED_ALERT_ON</span></td><td>bật cảnh báo tốc độ · mở cảnh báo tốc độ</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">SETTING_SPEED_ALERT_OFF</span></td><td>tắt cảnh báo tốc độ</td><td>confirm</td></tr>
+  <tr><td><span class="pill">SETTING_HOTSPOT_ALERT_ON</span></td><td>bật cảnh báo điểm nóng · mở cảnh báo điểm nóng</td><td>safe</td></tr>
+</table>
+
+<h3>6.6 Báo cáo sự cố giao thông</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">REPORT_OPEN</span></td><td>phản ánh điểm nóng · mở phản ánh giao thông</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">REPORT_TRAFFIC_JAM</span></td><td>báo kẹt xe · báo ùn tắc · phản ánh kẹt xe</td><td>confirm</td></tr>
+  <tr><td><span class="pill warn">REPORT_ACCIDENT</span></td><td>báo tai nạn · phản ánh tai nạn</td><td>confirm</td></tr>
+  <tr><td><span class="pill warn">REPORT_OBSTACLE</span></td><td>báo chướng ngại vật · báo vật cản</td><td>confirm</td></tr>
+  <tr><td><span class="pill warn">REPORT_SUBMIT</span></td><td>gửi phản ánh · xác nhận phản ánh</td><td>confirm</td></tr>
+</table>
+
+<h3>6.7 Radio &amp; nội dung</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">RADIO_PLAY</span></td><td>phát radio · bật radio · tiếp tục phát</td><td>safe</td></tr>
+  <tr><td><span class="pill">RADIO_PAUSE</span></td><td>tạm dừng · dừng radio · tạm dừng radio</td><td>safe</td></tr>
+  <tr><td><span class="pill">MEDIA_NEXT</span></td><td>tiếp theo · bài tiếp theo · chuyển bài</td><td>safe</td></tr>
+  <tr><td><span class="pill">MEDIA_PREV</span></td><td>bài trước · quay lại bài trước · nội dung trước</td><td>safe</td></tr>
+  <tr><td><span class="pill">RADIO_TALK_OPEN</span></td><td>trò chuyện với mc · nói chuyện với mc · vào phòng trò chuyện</td><td>safe</td></tr>
+  <tr><td><span class="pill">RADIO_MIC_MUTE</span></td><td>tắt mic · tắt micro</td><td>safe</td></tr>
+  <tr><td><span class="pill">RADIO_MIC_UNMUTE</span></td><td>bật mic · bật micro</td><td>safe</td></tr>
+  <tr><td><span class="pill">RADIO_SPEAKER_ON</span></td><td>bật loa · mở loa ngoài</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">RADIO_LEAVE_ROOM</span></td><td>rời phòng · thoát phòng trò chuyện</td><td>confirm</td></tr>
+  <tr><td><span class="pill">CONTENT_PLAY_ROAD_STORY</span></td><td>nghe chuyện dọc đường · mở chuyện dọc đường</td><td>safe</td></tr>
+  <tr><td><span class="pill">CONTENT_PLAY_FRIENDS</span></td><td>nghe kết bạn bốn phương · mở kết bạn bốn phương</td><td>safe</td></tr>
+</table>
+
+<h3>6.8 Phạt nguội</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">FINE_OPEN</span></td><td>tra cứu phạt nguội · mở phạt nguội · kiểm tra phạt nguội</td><td>safe</td></tr>
+  <tr><td><span class="pill">FINE_CHECK_NOW</span></td><td>kiểm tra ngay · tra cứu ngay</td><td>safe</td></tr>
+  <tr><td><span class="pill">VEHICLE_SELECT</span></td><td>chọn xe · đổi xe</td><td>safe</td></tr>
+  <tr><td><span class="pill">FINE_VIEW_ALL</span></td><td>xem tất cả kết quả · xem lịch sử tra cứu</td><td>safe</td></tr>
+  <tr><td><span class="pill">FINE_OPEN_DETAIL</span></td><td>xem chi tiết lỗi · mở chi tiết lỗi</td><td>safe</td></tr>
+  <tr><td><span class="pill">FINE_PAYMENT_GUIDE</span></td><td>hướng dẫn nộp phạt · cách nộp phạt</td><td>safe</td></tr>
+  <tr><td><span class="pill">FINE_SUBSCRIBE_OPEN</span></td><td>đăng ký nhận thông báo phạt nguội · bật thông báo phạt nguội</td><td>safe</td></tr>
+</table>
+
+<h3>6.9 Tiện ích &amp; Bảo hiểm</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">UTILITY_INSURANCE_OPEN</span></td><td>mở bảo hiểm xe · bảo hiểm xe · mua bảo hiểm xe</td><td>safe</td></tr>
+  <tr><td><span class="pill">UTILITY_RESCUE_OPEN</span></td><td>mở cứu hộ · cứu hộ hai bốn bảy · gọi cứu hộ</td><td>safe</td></tr>
+  <tr><td><span class="pill">UTILITY_GAS_OPEN</span></td><td>tìm trạm xăng · mở trạm xăng</td><td>safe</td></tr>
+  <tr><td><span class="pill">UTILITY_REGISTRATION_OPEN</span></td><td>mở đăng kiểm · đăng kiểm</td><td>safe</td></tr>
+  <tr><td><span class="pill">UTILITY_CAR_VALUATION_OPEN</span></td><td>định giá xe · mở định giá xe</td><td>safe</td></tr>
+  <tr><td><span class="pill">INSURANCE_VIEW_TNDS</span></td><td>xem bảo hiểm trách nhiệm dân sự · bảo hiểm trách nhiệm dân sự</td><td>safe</td></tr>
+  <tr><td><span class="pill">INSURANCE_VIEW_PHYSICAL</span></td><td>xem bảo hiểm vật chất · bảo hiểm vật chất</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">INSURANCE_BUY</span></td><td>mua bảo hiểm · bắt đầu mua bảo hiểm</td><td>confirm</td></tr>
+</table>
+
+<h3>6.10 Cộng đồng &amp; Hồ sơ</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">COMMUNITY_ENTER_FIRST</span></td><td>vào kênh đầu tiên · mở nhóm đầu tiên</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">COMMUNITY_JOIN</span></td><td>tham gia nhóm này · tham gia cộng đồng</td><td>confirm</td></tr>
+  <tr><td><span class="pill">PROFILE_VEHICLE_MANAGE</span></td><td>mở quản lý phương tiện · quản lý phương tiện</td><td>safe</td></tr>
+  <tr><td><span class="pill">SETTINGS_DISPLAY_OPEN</span></td><td>mở thông báo và hiển thị · cài đặt hiển thị</td><td>safe</td></tr>
+  <tr><td><span class="pill">SETTINGS_PERMISSION_OPEN</span></td><td>mở quyền truy cập · quản lý quyền truy cập</td><td>safe</td></tr>
+</table>
+
+<h3>6.11 Quyền truy cập</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">PERMISSION_LOCATION_ON</span></td><td>bật vị trí · cho phép vị trí</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">PERMISSION_LOCATION_OFF</span></td><td>tắt vị trí</td><td>confirm</td></tr>
+  <tr><td><span class="pill">PERMISSION_MIC_ON</span></td><td>bật micro · bật mic</td><td>safe</td></tr>
+  <tr><td><span class="pill warn">PERMISSION_MIC_OFF</span></td><td>tắt micro · tắt mic</td><td>confirm</td></tr>
+</table>
+
+<h3>6.12 Xác nhận (chỉ hoạt động trong trạng thái <em>confirming</em>)</h3>
+<table>
+  <tr><th style="width:30%">Mã lệnh</th><th>Câu mẫu</th><th style="width:13%">An toàn</th></tr>
+  <tr><td><span class="pill">CONFIRM_YES</span></td><td>đồng ý · xác nhận · đúng rồi · ok · có</td><td>safe</td></tr>
+  <tr><td><span class="pill">CONFIRM_NO</span></td><td>không · hủy · bỏ qua · thôi · không đồng ý</td><td>safe</td></tr>
+</table>
+</div>
+
+<!-- ============== 7 ============== -->
+<div class="section">
+<h1>7. Kịch bản hội thoại mẫu theo màn hình</h1>
+
+<p>
+  Phần này minh hoạ <strong>cách trợ lý làm việc thực tế</strong>: mỗi kịch bản gồm một hội thoại
+  ngắn giữa Tài xế (T) và Trợ lý (B), kèm ảnh chụp màn hình mà tài xế sẽ thấy sau khi lệnh thực thi.
+</p>
+
+<!-- 7.1 -->
+<h2>7.1 Mở Radio và phát một bài</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/radio.png" alt="Radio GT365 Live" />
+    <div class="caption">Màn hình Radio GT365 Live sau khi mở</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> GT365 ơi.</div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Vâng, tôi đang nghe.</div>
+      <div class="turn user"><span class="who">Tài xế</span> Mở radio.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>NAV_RADIO</code> → mở màn hình Radio.</div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đã mở radio.</div>
+      <div class="turn user"><span class="who">Tài xế</span> Nghe chuyện dọc đường.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>CONTENT_PLAY_ROAD_STORY</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đang phát Chuyện dọc đường.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7.2 -->
+<h2>7.2 Đặt lộ trình Hà Nội → Lạng Sơn</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/route.png" alt="Nhập địa chỉ tuyến đường" />
+    <div class="caption">Màn hình nhập tuyến đường</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Mở lộ trình.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>ROUTE_OPEN</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Bạn muốn đi từ đâu đến đâu?</div>
+      <div class="turn user"><span class="who">Tài xế</span> Đi từ Hà Nội đến Lạng Sơn.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>ROUTE_SET_HN_LS</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đã đặt lộ trình Hà Nội — Lạng Sơn, dự kiến 175 km.</div>
+    </div>
+    <div class="callout">
+      <span class="label">Mẹo</span> Nếu chỉ muốn sửa một đầu, hãy nói “Đổi điểm đi” hoặc “Đổi điểm đến”.
+    </div>
+  </div>
+</div>
+
+<!-- 7.3 -->
+<h2>7.3 Tra cứu phạt nguội</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/fine-lookup.png" alt="Tra cứu phạt nguội" />
+    <div class="caption">Bước 1: chọn xe để tra cứu</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Tra cứu phạt nguội.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>FINE_OPEN</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Bạn muốn tra cứu xe nào?</div>
+      <div class="turn user"><span class="who">Tài xế</span> Chọn mục đầu tiên.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>LIST_SELECT_1</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Kiểm tra ngay.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>FINE_CHECK_NOW</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đang tra cứu, vui lòng chờ một chút...</div>
+    </div>
+  </div>
+</div>
+
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/fine-result.png" alt="Kết quả phạt nguội" />
+    <div class="caption">Bước 2: xem kết quả</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn bot"><span class="who">Trợ lý</span> Xe của bạn có 2 lỗi vi phạm trong 30 ngày qua.</div>
+      <div class="turn user"><span class="who">Tài xế</span> Xem chi tiết lỗi.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>FINE_OPEN_DETAIL</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Hướng dẫn nộp phạt.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>FINE_PAYMENT_GUIDE</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Bạn có thể nộp phạt qua Cổng dịch vụ công hoặc tại đội CSGT...</div>
+    </div>
+  </div>
+</div>
+
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/fine-subscribe.png" alt="Đăng ký nhận thông báo phạt nguội" />
+    <div class="caption">Đăng ký nhận thông báo định kỳ</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Đăng ký nhận thông báo phạt nguội.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>FINE_SUBSCRIBE_OPEN</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đã mở đăng ký. Bạn có thể chọn tần suất thông báo theo tuần hoặc tháng.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7.4 -->
+<h2>7.4 Báo cáo sự cố giao thông (có xác nhận)</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/home.png" alt="Trang chủ với cảnh báo" />
+    <div class="caption">Trang chủ — nơi gửi báo cáo sự cố</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Báo kẹt xe.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>REPORT_TRAFFIC_JAM</code> · dangerLevel: <strong>confirm</strong></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Bạn xác nhận gửi báo kẹt xe tại vị trí hiện tại?</div>
+      <div class="turn user"><span class="who">Tài xế</span> Đồng ý.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>CONFIRM_YES</code> → thực hiện</div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đã gửi báo cáo. Cảm ơn bạn đã đóng góp.</div>
+    </div>
+    <div class="callout warn">
+      <span class="label">Vì sao cần xác nhận</span>
+      Báo cáo sai làm nhiễu hệ thống cảnh báo cho người dùng khác. Mọi <em>REPORT_*</em> đều có lớp confirm.
+    </div>
+  </div>
+</div>
+
+<!-- 7.5 -->
+<h2>7.5 Tiện ích — gọi cứu hộ &amp; tìm cây xăng</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/utilities.png" alt="Tiện ích" />
+    <div class="caption">Trang Tiện ích</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Mở tiện ích.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>NAV_UTILITIES</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Gọi cứu hộ.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>UTILITY_RESCUE_OPEN</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đã mở Cứu hộ 24/7. Bạn có thể nói “Gọi ngay” để liên hệ tổng đài.</div>
+      <div class="turn user"><span class="who">Tài xế</span> Quay lại.</div>
+      <div class="turn user"><span class="who">Tài xế</span> Tìm trạm xăng.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>UTILITY_GAS_OPEN</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Có 5 trạm xăng trong bán kính 5 km.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7.6 -->
+<h2>7.6 Bảo hiểm xe</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/insurance.png" alt="Mua bảo hiểm xe" />
+    <div class="caption">Trang Bảo hiểm xe</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Mở bảo hiểm xe.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>UTILITY_INSURANCE_OPEN</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Xem bảo hiểm trách nhiệm dân sự.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>INSURANCE_VIEW_TNDS</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Gói TNDS bắt buộc cho ô tô con dưới 6 chỗ giá từ 480.700đ/năm.</div>
+      <div class="turn user"><span class="who">Tài xế</span> Mua bảo hiểm.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>INSURANCE_BUY</code> · dangerLevel: <strong>confirm</strong></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Bạn xác nhận mua gói TNDS bắt buộc cho xe 30A-12345?</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7.7 -->
+<h2>7.7 Cộng đồng</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/community.png" alt="Cộng đồng" />
+    <div class="caption">Trang Cộng đồng</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Mở cộng đồng.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>NAV_COMMUNITY</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Vào kênh đầu tiên.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>COMMUNITY_ENTER_FIRST</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Tham gia nhóm này.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>COMMUNITY_JOIN</code> · dangerLevel: <strong>confirm</strong></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Bạn có chắc tham gia nhóm “Cánh tài xế Bắc Bộ”?</div>
+      <div class="turn user"><span class="who">Tài xế</span> Có.</div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đã tham gia nhóm.</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7.8 -->
+<h2>7.8 Hồ sơ &amp; Cài đặt</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/profile.png" alt="Profile" />
+    <div class="caption">Trang Tài khoản (Profile)</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Hồ sơ của tôi.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>NAV_PROFILE</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Mở quản lý phương tiện.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>PROFILE_VEHICLE_MANAGE</code></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <figure>
+    <img src="assets/screens/display-settings.png" alt="Thông báo và hiển thị" />
+    <figcaption>Cài đặt Thông báo &amp; Hiển thị (<code>SETTINGS_DISPLAY_OPEN</code>)</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/screens/permission-settings.png" alt="Quản lý quyền truy cập" />
+    <figcaption>Quản lý quyền truy cập (<code>SETTINGS_PERMISSION_OPEN</code>)</figcaption>
+  </figure>
+</div>
+
+<!-- 7.9 -->
+<h2>7.9 Thông báo</h2>
+<div class="scene">
+  <div class="shot">
+    <img src="assets/screens/notifications.png" alt="Thông báo" />
+    <div class="caption">Trung tâm thông báo</div>
+  </div>
+  <div class="body">
+    <div class="dialog">
+      <div class="turn user"><span class="who">Tài xế</span> Xem thông báo.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>NAV_NOTIFICATIONS</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Cuộn xuống.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>LIST_SCROLL_DOWN</code></div>
+      <div class="turn user"><span class="who">Tài xế</span> Chọn mục thứ hai.</div>
+      <div class="turn sys"><span class="who">Hệ thống</span> intent: <code>LIST_SELECT_2</code></div>
+      <div class="turn bot"><span class="who">Trợ lý</span> Đang mở chi tiết thông báo.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============== 8 ============== -->
+<div class="section">
+<h1>8. Lớp an toàn — Confirm &amp; chặn lệnh nguy hiểm</h1>
+
+<p>Mỗi lệnh có một thuộc tính <span class="mono">dangerLevel</span> với 3 mức:</p>
+
+<table>
+  <tr><th style="width:18%">Mức</th><th>Hành vi</th><th>Ví dụ lệnh</th></tr>
+  <tr>
+    <td><span class="pill">safe</span></td>
+    <td>Thực hiện ngay sau khi khớp.</td>
+    <td><code>NAV_RADIO</code>, <code>RADIO_PLAY</code>, <code>FINE_OPEN</code></td>
+  </tr>
+  <tr>
+    <td><span class="pill warn">confirm</span></td>
+    <td>Chuyển sang trạng thái <em>confirming</em>, đọc câu hỏi xác nhận, đợi <code>CONFIRM_YES</code> hoặc <code>CONFIRM_NO</code> (timeout 5–8s sẽ tự huỷ).</td>
+    <td><code>ROUTE_CLEAR</code>, <code>REPORT_TRAFFIC_JAM</code>, <code>INSURANCE_BUY</code>, <code>PERMISSION_LOCATION_OFF</code></td>
+  </tr>
+  <tr>
+    <td><span class="pill danger">blocked</span></td>
+    <td>Bị chặn nếu app phát hiện đang di chuyển; trợ lý gợi ý dừng xe an toàn rồi thử lại.</td>
+    <td>Dành cho các tác vụ phức tạp (đăng nhập, nhập biển số dài...) — <em>roadmap</em>.</td>
+  </tr>
+</table>
+
+<h3>Cấu trúc một câu xác nhận</h3>
+<div class="dialog">
+  <div class="turn bot"><span class="who">Trợ lý</span> Bạn xác nhận <em>&lt;hành động&gt;</em>?</div>
+  <div class="turn user"><span class="who">Tài xế</span> Đồng ý / Có / Đúng rồi  <strong>hoặc</strong>  Không / Hủy / Thôi.</div>
+</div>
+
+<div class="callout danger">
+  <span class="label">Quan trọng</span>
+  Trong trạng thái <em>confirming</em>, các lệnh điều hướng khác bị tạm khoá để tránh nhầm lẫn.
+  Chỉ <code>CONFIRM_YES</code> và <code>CONFIRM_NO</code> được ưu tiên (priority = 8).
+</div>
+</div>
+
+<!-- ============== 9 ============== -->
+<div class="section">
+<h1>9. Đa ngôn ngữ &amp; chuẩn hoá tiếng Việt</h1>
+
+<h3>Hỗ trợ ngôn ngữ</h3>
+<table>
+  <tr><th>Ngôn ngữ</th><th>Endpoint ASR</th><th>Trạng thái</th></tr>
+  <tr><td>Tiếng Việt (mặc định)</td><td><code>ASR_GRPC_URI</code> (cổng 9112)</td><td>Đầy đủ ~65 lệnh.</td></tr>
+  <tr><td>Tiếng Mông (Hmong)</td><td><code>ASR_HMONG_GRPC_URI</code> (cổng 9113)</td><td>ASR sẵn sàng. Catalog lệnh sẽ bổ sung ở phase sau.</td></tr>
+</table>
+
+<h3>Chuẩn hoá đầu vào</h3>
+<p>Trước khi khớp lệnh, transcript được chuẩn hoá để bỏ qua các khác biệt nhỏ:</p>
+<ul>
+  <li>Lower-case &amp; trim, gộp khoảng trắng.</li>
+  <li>Bỏ dấu Unicode — “Mở Lộ Trình” và “mo lo trinh” đều khớp <code>ROUTE_OPEN</code>.</li>
+  <li>Loại các từ đệm thường gặp: “à”, “ờ”, “này”…</li>
+  <li>Map vài biến thể chính tả: “oto” ↔ “ô tô”, “gt365” ↔ “giao thông 365”.</li>
+</ul>
+
+<div class="callout">
+  <span class="label">Vì sao quan trọng</span>
+  ASR đôi khi nhận thiếu dấu hoặc viết liền chữ. Nhờ chuẩn hoá, tỷ lệ khớp đúng tăng đáng kể trên các giọng vùng miền.
+</div>
+</div>
+
+<!-- ============== 10 ============== -->
+<div class="section">
+<h1>10. Câu hỏi thường gặp (FAQ)</h1>
+
+<h3>Trợ lý có hoạt động khi mất mạng không?</h3>
+<p>Không. ASR và TTS đều cần kết nối tới upstream. Khi mất mạng, app sẽ thông báo và tự động tắt trợ lý.</p>
+
+<h3>Tôi nói nhanh quá / nhỏ quá thì sao?</h3>
+<p>ASR có cơ chế phát hiện im lặng (<code>ASR_SILENCE_TIMEOUT = 10s</code>) và độ dài tối đa (<code>ASR_SPEECH_MAX = 30s</code>).
+  Nếu transcript trống hoặc điểm khớp dưới ngưỡng, trợ lý sẽ nói “Xin lỗi, tôi chưa nghe rõ” và tiếp tục nghe.</p>
+
+<h3>Trợ lý có lưu giọng nói của tôi không?</h3>
+<p>MVP hiện tại không lưu audio. Chỉ transcript được dùng tạm thời để khớp lệnh, không persistent.</p>
+
+<h3>Có thể đổi giọng đọc không?</h3>
+<p>Có — giọng được cấu hình ở backend qua biến <code>TTS_VOICE_ID</code> (mặc định <code>phuongnhi-north</code>),
+  và <code>TTS_TEMPO</code> (0.5–2.0) cho tốc độ đọc.</p>
+
+<h3>Khi tôi đang ở Profile, có thể nói “Tắt mic” để tắt micro radio không?</h3>
+<p>Không — <code>RADIO_MIC_MUTE</code> chỉ hoạt động trên màn hình <em>radioOnAir</em>. Đây là cơ chế <strong>context-aware</strong>:
+  cùng một câu chỉ làm việc đúng nơi cần làm.</p>
+
+<h3>Tôi bấm mic nhưng app không phản ứng.</h3>
+<p>Kiểm tra: (1) đã cấp quyền Micro chưa, (2) đang dùng trên <code>http://localhost</code> hoặc HTTPS chưa
+  (vì trình duyệt chặn mic trên http public), (3) Voice Bridge có chạy không
+  — gọi <code>GET /api/voice-health</code>.</p>
+</div>
+
+<!-- ============== 11 ============== -->
+<div class="section">
+<h1>11. Phụ lục: thuật ngữ</h1>
+
+<table>
+  <tr><th style="width:25%">Thuật ngữ</th><th>Giải thích ngắn</th></tr>
+  <tr><td>ASR</td><td><em>Automatic Speech Recognition</em> — chuyển giọng nói thành văn bản.</td></tr>
+  <tr><td>TTS</td><td><em>Text-to-Speech</em> — chuyển văn bản thành giọng nói.</td></tr>
+  <tr><td>Intent / Mã lệnh</td><td>Mã định danh ý định của người dùng, vd <code>NAV_RADIO</code>.</td></tr>
+  <tr><td>Phrase</td><td>Một cách nói cụ thể của cùng một intent. Một intent có nhiều phrase.</td></tr>
+  <tr><td>Matcher</td><td>Bộ so khớp transcript với phrase, trả ra intent + điểm tin cậy.</td></tr>
+  <tr><td>Screen-aware action</td><td>Mapping intent × màn hình → hành động; tránh nhập nhằng.</td></tr>
+  <tr><td>Confirming</td><td>Trạng thái đợi xác nhận sau lệnh có <em>dangerLevel = confirm</em>.</td></tr>
+  <tr><td>Voice Bridge</td><td>Server Node.js trung gian; proxy WebSocket ↔ gRPC/WS upstream.</td></tr>
+  <tr><td>Interim transcript</td><td>Bản dịch tạm trong khi tài xế đang nói.</td></tr>
+  <tr><td>Final transcript</td><td>Bản dịch chốt khi tài xế dừng nói; được dùng để khớp lệnh.</td></tr>
+</table>
+
+<div style="margin-top: 30px; padding: 14px; background: #f1f5f9; border-radius: 8px; font-size: 9.5pt; color: #475569;">
+  <strong>Tài liệu liên quan trong repo:</strong>
+  <ul style="margin: 6px 0 0 16px;">
+    <li><code>README.md</code> — tổng quan dự án &amp; cách chạy</li>
+    <li><code>docs/HANDFREE.md</code> — bản markdown chi tiết kỹ thuật</li>
+    <li><code>md_tmp/BA_HANDSFREE_MVP_PLAN.md</code> — yêu cầu BA</li>
+    <li><code>md_tmp/ASR_TTS_INTEGRATION_PLAN.md</code> — kế hoạch tích hợp ASR/TTS</li>
+    <li><code>src/voice/commands.ts</code> — danh sách lệnh nguồn (~65 lệnh)</li>
+  </ul>
+</div>
+</div>
+
+</body>
+</html>

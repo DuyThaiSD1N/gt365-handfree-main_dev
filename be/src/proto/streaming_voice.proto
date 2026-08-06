@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package streaming_voice;
+
+service StreamVoice {
+  rpc SendVoice(stream VoiceRequest) returns (stream TextReply) {}
+}
+
+message VoiceRequest {
+  bytes byte_buff = 1;
+}
+
+message TextReply {
+  int32 status = 1;
+  string msg = 8;
+  int32 segment = 2;
+  string id = 3;
+
+  message Result {
+    message Hypothese {
+      string transcript = 1;
+      string transcript_normed = 2;
+      string transcript_urlencoded = 3;
+      string transcript_normed_urlencoded = 4;
+      float confidence = 5;
+      float likelihood = 6;
+    }
+
+    repeated Hypothese hypotheses = 1;
+    bool final = 2;
+  }
+
+  Result result = 4;
+  float segment_start = 5;
+  float segment_length = 6;
+  float total_length = 7;
+  string audio_url = 9;
+}

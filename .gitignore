@@ -1,0 +1,11 @@
+CCCD/
+callbot-hcc-base-ts
+be/.env
+.env
+node_modules/
+be/node_modules/
+md_tmp/
+plan/
+logs/
+logs/*
+logs/fe.log
