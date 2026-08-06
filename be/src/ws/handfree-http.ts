@@ -809,19 +809,20 @@ export function handfreeCommandHandler(): RequestHandler {
         return;
       }
 
-      // Strict YES/NO validation: confidence ≥ 0.9 và input ≤ 4 từ
+      // Strict YES/NO validation: confidence ≥ 0.85 và input ≤ 4 từ
       // Tránh câu dài bị match nhầm vào CONFIRM_YES/NO
+      // Giảm từ 0.9 → 0.85 để cover các từ tiếng Việt có dấu như "ừ", "đồng ý"
       const inputWordCount = parsed.text.trim().split(/\s+/).length;
       const matchResult = matchTranscript(parsed.text, parsed.screen, 'confirming');
       const isStrictYes =
         matchResult.type === 'matched' &&
         matchResult.candidate.command.intentCode === 'CONFIRM_YES' &&
-        matchResult.candidate.confidence >= 0.9 &&
+        matchResult.candidate.confidence >= 0.85 &&
         inputWordCount <= 4;
       const isStrictNo =
         matchResult.type === 'matched' &&
         matchResult.candidate.command.intentCode === 'CONFIRM_NO' &&
-        matchResult.candidate.confidence >= 0.9 &&
+        matchResult.candidate.confidence >= 0.85 &&
         inputWordCount <= 4;
 
       if (isStrictYes) {

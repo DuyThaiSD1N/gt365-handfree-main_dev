@@ -31,6 +31,36 @@ function hasListKeyword(normalized: string): boolean {
 function hasChannelNavKeyword(normalized: string): boolean {
   return CHANNEL_NAV_KEYWORDS.some((kw) => normalized.includes(kw));
 }
+
+// Levenshtein distance để so sánh độ giống nhau của 2 chuỗi
+// Dùng cho match các từ confirm ngắn như "ừ", "ừa", "ừm"
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
 function screenAllowed(
   allowedScreens: (ScreenId[] | 'all' | 'confirming'),
   screen: ScreenId,
@@ -74,14 +104,33 @@ export function matchTranscript(
       const normalizedPhrase = normalizeVietnamese(phrase);
       let confidence = 0;
 
-      if (normalized === normalizedPhrase) {
+      // Special handling cho CONFIRM_YES và CONFIRM_NO
+      // Các từ này thường rất ngắn sau normalize: "u" (ừ), "o" (ờ), "dong y", "ok", etc.
+      if (command.intentCode === 'CONFIRM_YES' || command.intentCode === 'CONFIRM_NO') {
+        if (normalized === normalizedPhrase) {
+          confidence = 1;
+        } else if (normalizedPhrase.length <= 4) {
+          // Các từ confirm ngắn (≤ 4 ký tự): cho phép 1 ký tự khác biệt
+          const dist = levenshteinDistance(normalized, normalizedPhrase);
+          if (dist === 0) {
+            confidence = 1;
+          } else if (dist === 1 && normalized.length <= 4) {
+            confidence = 0.88;
+          }
+          // Debug log
+          if (normalized.length <= 3) {
+            console.log(`[matcher] confirm-debug: "${normalized}" vs "${normalizedPhrase}" dist=${dist} conf=${confidence}`);
+          }
+        } else if (normalized.includes(normalizedPhrase) || normalizedPhrase.includes(normalized)) {
+          confidence = 0.85;
+        }
+      } else if (normalized === normalizedPhrase) {
         confidence = 1;
       } else if (
         normalized.length >= 5 &&
         (normalized.includes(normalizedPhrase) || normalizedPhrase.includes(normalized))
       ) {
         // Substring match: chỉ dùng nếu phrase đủ dài (≥ 4 ký tự) để tránh false positive
-        // với các phrase 1 từ ngắn như "ừ", "có", "phải"
         if (normalizedPhrase.split(' ').length >= 2 || normalizedPhrase.length >= 4) {
           confidence = 0.82;
         }

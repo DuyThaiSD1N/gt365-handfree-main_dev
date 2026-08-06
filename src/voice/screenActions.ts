@@ -206,9 +206,9 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'OPEN_PROFILE_SCREEN',
     nextScreen: 'profile',
     feedback: [
-      'Mình mở Tài khoản cho bạn rồi nhé, lúc nào tiện bạn xem cũng được, có gì cứ bảo mình.',
+      'Mình đã đưa bạn vào mục Tài khoản nha, bạn cần gì tiếp cứ bảo mình.',
+      'Mình mở Tài khoản cho bạn rồi nhé, bạn cần gì tiếp cứ bảo mình.',
       'Tài khoản của bạn đây rồi ạ, bạn cần đổi thông tin gì cứ nói, mình thao tác cho.',
-      'Mình vào Tài khoản cho bạn rồi đó, có gì cứ kêu mình giúp nhé.',
     ],
   },
   {
