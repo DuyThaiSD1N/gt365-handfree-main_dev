@@ -20,7 +20,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'all',
     actionCode: 'CLOSE_ASSISTANT',
     feedback: [
-      'Mình tạm nghỉ đây ạ, cần gì bạn cứ gọi "GT365 ơi" là mình nghe lại liền nhé.',
+      'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
       'Mình nghỉ đây nha, lúc nào cần bạn cứ kêu "GT365 ơi" là mình bật lại liền.',
       'Mình tắt đây ạ, bạn lái an toàn nhé, có gì bạn gọi mình một tiếng là mình nghe.',
       'Ờ, mình nghỉ rồi đó, bạn cứ gọi tên mình là mình nghe lại liền nha.',

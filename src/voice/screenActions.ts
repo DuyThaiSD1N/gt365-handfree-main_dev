@@ -21,11 +21,11 @@ export const screenActions: ScreenAction[] = [
     screen: 'all',
     actionCode: 'CLOSE_ASSISTANT',
     feedback: [
-      'Mình tạm nghỉ đây ạ, cần gì bạn chạm vào nút trợ lý là mình nghe lại liền nhé.',
-      'Mình nghỉ đây nha, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
-      'Mình tắt đây ạ, bạn lái an toàn nhé, có gì bạn chạm vào nút trợ lý là mình nghe.',
-      'Ờ, mình nghỉ rồi đó, bạn cứ chạm vào nút trợ lý là mình nghe lại liền nha.',
-      'Mình tạm dừng nhé, bạn đi đường cẩn thận, cần gì chạm nút trợ lý một cái là được.',
+      'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
+      'Mình nghỉ đây nha, lúc nào cần bạn cứ kêu "GT365 ơi" là mình bật lại liền.',
+      'Mình tắt đây ạ, bạn lái an toàn nhé, có gì bạn gọi mình một tiếng là mình nghe.',
+      'Ờ, mình nghỉ rồi đó, bạn cứ gọi tên mình là mình nghe lại liền nha.',
+      'Mình tạm dừng nhé, bạn đi đường cẩn thận, cần gì kêu mình một tiếng là được.',
     ],
   },
   // ── ASSISTANT_HELP - Context-aware help per screen ─────────────────────
