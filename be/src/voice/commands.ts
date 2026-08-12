@@ -199,18 +199,6 @@ export const commands: CommandDefinition[] = [
     priority: 1,
   },
   {
-    intentCode: 'SETTING_SPEED_ALERT_ON',
-    phrases: ['bật cảnh báo tốc độ', 'mở cảnh báo tốc độ', 'bật báo tốc độ'],
-    allowedScreens: ['home', 'displaySettings'],
-    dangerLevel: 'safe',
-  },
-  {
-    intentCode: 'SETTING_SPEED_ALERT_OFF',
-    phrases: ['tắt cảnh báo tốc độ', 'đừng cảnh báo tốc độ nữa'],
-    allowedScreens: ['displaySettings'],
-    dangerLevel: 'confirm',
-  },
-  {
     intentCode: 'SETTING_HOTSPOT_ALERT_ON',
     phrases: ['bật cảnh báo điểm nóng', 'mở cảnh báo điểm nóng', 'bật báo điểm nóng'],
     allowedScreens: ['home', 'displaySettings'],
@@ -338,7 +326,8 @@ export const commands: CommandDefinition[] = [
       'xem danh sách kênh',
       'cho tôi danh sách các kênh',
       'cho tôi xem danh sách các kênh',
-      'mình xem danh sách kênh được không',
+      // BỎ: 'mình xem danh sách kênh được không', // ❌ Conflict với "không"
+      'mình xem danh sách kênh được chứ',  // ✅ Thay thế
       'cho mình xem danh sách kênh',
       'cho mình danh sách kênh',
 
@@ -355,7 +344,8 @@ export const commands: CommandDefinition[] = [
       // Hỏi gợi ý nghe
       'nghe kênh nào bây giờ',
       'nên nghe kênh nào',
-      'có kênh nào hay không',
+      // BỎ: 'có kênh nào hay không', // ❌ Conflict với "không"
+      'có kênh nào hay',  // ✅ Thay thế
       'kênh nào đang phát',
       'đang có kênh gì',
       'hôm nay có kênh gì',
@@ -366,7 +356,8 @@ export const commands: CommandDefinition[] = [
       // Nói ngắn / tự nhiên
       'kênh có gì',
       'radio có gì',
-      'có gì nghe không',
+      // BỎ: 'có gì nghe không', // ❌ Bị conflict với "không" (CONFIRM_NO)
+      'có gì để nghe',  // ✅ Thay thế
       'kênh gì',
       'mấy kênh vậy',
       'bao nhiêu kênh',
@@ -763,7 +754,7 @@ export const commands: CommandDefinition[] = [
     ],
     allowedScreens: 'confirming',
     dangerLevel: 'safe',
-    priority: 8,
+    priority: 10,  // ✅ Tăng lên cao nhất để ưu tiên "không"
   },
 ];
 

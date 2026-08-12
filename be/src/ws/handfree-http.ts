@@ -304,9 +304,7 @@ const FALLBACK_REPLIES_FIRST = [
 ];
 
 const FALLBACK_REPLIES_SECOND = [
-  'Mình vẫn chưa nghe rõ, thôi bạn dùng nút bấm cho nhanh nhé, mình tạm nghỉ đây.',
-  'Mình chưa hiểu được ý bạn, bạn thao tác bằng tay cho tiện nha, mình đóng đây.',
-  'Ui, mình không rõ lệnh này, bạn bấm trên màn hình cho nhanh nhé, mình tắt đây.',
+  'Xin lỗi, mình vẫn không nghe rõ. Tạm thời mình sẽ dừng lại ở đây. Lúc nào cần bạn chạm nút trợ lý để mình trở lại nhé.',
 ];
 
 const cache = new Map<string, { res: HandfreeResponse; expiresAt: number }>();
@@ -316,7 +314,12 @@ function cacheKey(p: ParsedBody): string {
   const pendingKey = p.pending ? `:p=${p.pending.intentCode}` : '';
   const stateKey = p.assistantState !== 'idle' ? `:s=${p.assistantState}` : '';
   const channelKey = p.currentChannelId ? `:ch=${p.currentChannelId}` : '';
-  return `${p.text.trim().toLowerCase()}|${p.screen}${pendingKey}${stateKey}${channelKey}`;
+  // State-aware cache key để tránh trả response sai ngữ cảnh
+  // (ví dụ: cùng câu "tắt cảnh báo" nhưng trạng thái alert ON/OFF khác nhau).
+  const speedKey = typeof p.speedAlertEnabled === 'boolean' ? `:spd=${p.speedAlertEnabled ? 1 : 0}` : '';
+  const hotspotKey = typeof p.hotspotAlertEnabled === 'boolean' ? `:hot=${p.hotspotAlertEnabled ? 1 : 0}` : '';
+  const radioKey = typeof p.radioPlaying === 'boolean' ? `:radio=${p.radioPlaying ? 1 : 0}` : '';
+  return `${p.text.trim().toLowerCase()}|${p.screen}${pendingKey}${stateKey}${channelKey}${speedKey}${hotspotKey}${radioKey}`;
 }
 
 function getCached(key: string): HandfreeResponse | null {
@@ -350,9 +353,12 @@ function parseBody(raw: any): ParsedBody | null {
   if (!raw || typeof raw !== 'object') return null;
   const text = typeof raw.text === 'string' ? raw.text.trim() : '';
   const screen = typeof raw.screen === 'string' ? raw.screen : '';
+
   const hasPending = raw.pending && typeof raw.pending === 'object';
-  // Cho phép text rỗng nếu có pending (client báo hiệu im lặng khi đang confirm)
-  if ((!text && !hasPending) || !screen || !VALID_SCREENS.has(screen)) return null;
+
+  // ✅ CHO PHÉP text rỗng (im lặng) - sẽ xử lý ở handler
+  // Chỉ reject nếu thiếu screen hoặc screen không hợp lệ
+  if (!screen || !VALID_SCREENS.has(screen)) return null;
 
   let pending: Pending | null = null;
   if (raw.pending && typeof raw.pending === 'object') {
@@ -777,11 +783,44 @@ export function handfreeCommandHandler(): RequestHandler {
       return;
     }
 
+    // ✅ DEBUG LOG: Track Android vs Web requests
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const isAndroid = userAgent.toLowerCase().includes('android');
+    console.log(`[handfree] 📥 ${isAndroid ? 'ANDROID' : 'WEB'} request from IP=${ip}`);
+    console.log(`  text="${parsed.text}" screen="${parsed.screen}" state="${parsed.assistantState}"`);
+    console.log(`  pending=${parsed.pending ? JSON.stringify(parsed.pending) : 'null'}`);
+
     const key = cacheKey(parsed);
     const cached = getCached(key);
     if (cached) {
       console.log(`[handfree] ✓ cache "${parsed.text}" screen=${parsed.screen} type=${cached.type}`);
       res.json(cached);
+      return;
+    }
+
+    // ── Silence handling (idle state) ─────────────────────────────────────
+    // Khi user im lặng (không nói gì) → Đóng assistant với message thân thiện
+    // Bao gồm: text rỗng HOẶC text quá ngắn (nhiễu âm thanh từ ASR)
+    const normalizedText = parsed.text.length > 0 ? normalizeVietnamese(parsed.text) : '';
+    const isLikelySilence = !parsed.text || normalizedText.length <= 2;
+
+    if (isLikelySilence && !parsed.pending) {
+      const silenceResponse: HandfreeResponse = {
+        type: 'fallback',
+        reply: 'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
+        suggestions: [],
+        shouldCloseAssistant: true,
+        openMicAfterReply: false,
+        consecutiveFallbacks: 0, // Reset vì đây là silence, không phải fallback thật
+        meta: {
+          intentCode: null,
+          confidence: 0,
+          source: 'fallback',
+          latencyMs: Date.now() - startedAt,
+        },
+      };
+      console.log(`[handfree] ✓ silence-idle (text="${parsed.text}", normalized="${normalizedText}") → closing assistant`);
+      res.json(silenceResponse);
       return;
     }
 
@@ -960,6 +999,8 @@ export function handfreeCommandHandler(): RequestHandler {
 
     // No-op nếu đang ở đúng màn hình rồi (screen-based noop)
     if (isScreenNoop(action.actionCode, parsed.screen)) {
+      console.log(`[handfree] ⚠️ SCREEN-NOOP DETECTED!`);
+      console.log(`  action="${action.actionCode}" expects screen="${SCREEN_NOOP_MAP[action.actionCode]}" but already on "${parsed.screen}"`);
       const response = buildNoopResponse(
         parsed,
         intentCode,
@@ -986,43 +1027,28 @@ export function handfreeCommandHandler(): RequestHandler {
       return;
     }
 
-    // No-op cảnh báo: dùng state thật từ Android nếu có (chính xác hơn recentActions)
+    // No-op cảnh báo: chỉ check hotspotAlert (cảnh báo điểm nóng)
+    // Không quan tâm đến speedAlert
     if (action.actionCode === 'ENABLE_VIOLATION_ALERTS') {
-      const bothOn = parsed.speedAlertEnabled === true && parsed.hotspotAlertEnabled === true;
-      if (bothOn) {
+      // ✅ Chỉ NOOP khi cảnh báo điểm nóng đã bật rồi
+      if (parsed.hotspotAlertEnabled === true) {
         const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
         setCached(key, response);
-        console.log(`[handfree] ✓ alert-noop ENABLE (both already on)`);
+        console.log(`[handfree] ✓ alert-noop ENABLE (hotspot already on: ${parsed.hotspotAlertEnabled})`);
         res.json(response);
         return;
       }
     }
 
     if (action.actionCode === 'DISABLE_VIOLATION_ALERTS') {
-      const bothOff = parsed.speedAlertEnabled === false && parsed.hotspotAlertEnabled === false;
-      if (bothOff) {
+      // ✅ Chỉ NOOP khi cảnh báo điểm nóng đã tắt rồi
+      if (parsed.hotspotAlertEnabled === false) {
         const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
         setCached(key, response);
-        console.log(`[handfree] ✓ alert-noop DISABLE (both already off)`);
+        console.log(`[handfree] ✓ alert-noop DISABLE (hotspot already off: ${parsed.hotspotAlertEnabled})`);
         res.json(response);
         return;
       }
-    }
-
-    if (action.actionCode === 'ENABLE_SPEED_ALERT' && parsed.speedAlertEnabled === true) {
-      const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
-      setCached(key, response);
-      console.log(`[handfree] ✓ alert-noop ENABLE_SPEED (already on)`);
-      res.json(response);
-      return;
-    }
-
-    if (action.actionCode === 'DISABLE_SPEED_ALERT' && parsed.speedAlertEnabled === false) {
-      const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
-      setCached(key, response);
-      console.log(`[handfree] ✓ alert-noop DISABLE_SPEED (already off)`);
-      res.json(response);
-      return;
     }
 
     if (action.actionCode === 'ENABLE_HOTSPOT_ALERT' && parsed.hotspotAlertEnabled === true) {

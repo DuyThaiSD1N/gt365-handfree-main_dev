@@ -361,8 +361,8 @@ export const screenActions: ScreenAction[] = [
     screen: 'all',
     actionCode: 'ENABLE_VIOLATION_ALERTS',
     feedback: [
-      'Mình bật cảnh báo cho bạn rồi nhé, có tốc độ hay điểm nóng mình nhắc bạn liền.',
-      'Mình bật cảnh báo vi phạm cho bạn rồi đó, bạn yên tâm lái, có gì mình báo ngay.',
+      'Mình bật cảnh báo điểm nóng cho bạn rồi nhé, có điểm nóng nào mình nhắc bạn liền.',
+      'Mình bật cảnh báo điểm nóng cho bạn rồi đó, bạn yên tâm lái, có gì mình báo ngay.',
     ],
     requiresConfirmation: true,
     confirmPrompt: [
@@ -375,42 +375,20 @@ export const screenActions: ScreenAction[] = [
     screen: 'all',
     actionCode: 'DISABLE_VIOLATION_ALERTS',
     feedback: [
-      'Mình tắt cảnh báo cho bạn rồi đấy, bạn nhớ giữ tốc độ giùm mình nhé.',
-      'Mình đã tắt cảnh báo cho bạn rồi đó, bạn lái cẩn thận giùm mình nha.',
-      'Mình tắt cảnh báo cho bạn ạ, cần bật lại bạn cứ kêu mình một tiếng.',
+      'Mình tắt cảnh báo điểm nóng cho bạn rồi đấy, bạn lái cẩn thận giùm mình nhé.',
+      'Mình đã tắt cảnh báo điểm nóng cho bạn rồi đó, bạn lái cẩn thận giùm mình nha.',
+      'Mình tắt cảnh báo điểm nóng cho bạn ạ, cần bật lại bạn cứ kêu mình một tiếng.',
     ],
     requiresConfirmation: true,
     confirmPrompt: [
-      'Mình tắt cảnh báo cho bạn nhé?',
-      'Mình tắt cảnh báo cho bạn nha ạ?',
+      'Mình tắt cảnh báo điểm nóng cho bạn nhé?',
+      'Mình tắt cảnh báo điểm nóng cho bạn nha ạ?',
     ],
     confirmPromptByScreen: {
       displaySettings:
-        'Mình tắt cảnh báo cho bạn nhé? Sau đó mình sẽ không nhắc tốc độ và điểm nóng nữa đâu.',
+        'Mình tắt cảnh báo điểm nóng cho bạn nhé? Sau đó mình sẽ không nhắc điểm nóng nữa đâu.',
     },
     riskLevel: 'critical',
-  },
-  {
-    intentCode: 'SETTING_SPEED_ALERT_ON',
-    screen: 'all',
-    actionCode: 'ENABLE_SPEED_ALERT',
-    feedback: [
-      'Mình bật báo tốc độ cho bạn rồi nhé, có gì mình nhắc bạn liền.',
-      'Báo tốc độ đã bật cho bạn rồi đó, bạn yên tâm lái nhé.',
-      'Mình mở báo tốc độ cho bạn ạ, mình theo dõi giúp bạn luôn nha.',
-    ],
-  },
-  {
-    intentCode: 'SETTING_SPEED_ALERT_OFF',
-    screen: 'displaySettings',
-    actionCode: 'DISABLE_SPEED_ALERT',
-    feedback: [
-      'Mình tắt báo tốc độ cho bạn rồi đấy, bạn nhớ giữ ga giùm mình nhé.',
-      'Mình tắt báo tốc độ cho bạn rồi đó, đi đường bạn cẩn thận giùm mình nha.',
-    ],
-    requiresConfirmation: true,
-    confirmPrompt: ['Mình tắt báo tốc độ cho bạn nhé?', 'Mình tắt báo tốc độ cho bạn nha ạ?'],
-    riskLevel: 'caution',
   },
   {
     intentCode: 'SETTING_HOTSPOT_ALERT_ON',
@@ -945,6 +923,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'confirming',
     actionCode: 'CANCEL_PENDING',
     feedback: [
+      'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
       'Oke, mình bỏ qua cho bạn nhé.',
       'Mình hủy lệnh này cho bạn nha.',
       'Mình không làm nữa đâu, bạn cần gì khác cứ bảo mình.',

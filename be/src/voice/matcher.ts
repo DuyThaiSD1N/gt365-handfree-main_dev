@@ -82,7 +82,8 @@ export function matchTranscript(
 ): MatchResult {
   const normalized = stripTrailingFillers(normalizeVietnamese(transcript));
 
-  if (normalized.length < 2) {
+  const allowSingleCharConfirm = assistantState === 'confirming' && normalized.length === 1;
+  if (normalized.length < 2 && !allowSingleCharConfirm) {
     return { type: 'noMatch' };
   }
 

@@ -295,6 +295,7 @@ const asrNoTranscriptReplies = [
 ];
 
 const asrSilenceReplies = [
+  'Mình nghỉ đây nha, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
   'Mình chưa nghe thấy gì, bạn cứ chạm vào nút trợ lý là mình nghe lại liền nha.',
   'Hình như bạn chưa nói gì, bạn chạm nút trợ lý rồi nói lệnh là mình bắt ngay nhé.',
   'Mình chờ mãi không nghe thấy gì, bạn bấm nút trợ lý rồi nói là mình sẵn sàng liền.',
@@ -804,7 +805,7 @@ function App() {
         addBotFeedback(
           pickFromPool([
             'Mình tắt mic rồi nhé, cần gì bạn chạm vào nút trợ lý là mình nghe lại liền.',
-            'Mình nghỉ đây nha, bạn chạm nút trợ lý một cái là mình bật lại liền.',
+            'Mình nghỉ đây nha, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
             'Mình tạm tắt mic rồi đó, lúc nào cần bạn chạm nút trợ lý là mình sẵn sàng ngay.',
           ]),
         );
@@ -993,20 +994,6 @@ function App() {
             'Mình vẫn ở đây từ nãy nè, có gì bạn cứ bảo.',
           ])
           : null;
-      case 'ENABLE_SPEED_ALERT':
-        return toggles.speedAlert
-          ? pool([
-            'Mình đang bật báo tốc độ cho bạn rồi đó, bạn yên tâm nhé.',
-            'Báo tốc độ của mình đang chạy mà, bạn có cần đổi mức không?',
-          ])
-          : null;
-      case 'DISABLE_SPEED_ALERT':
-        return !toggles.speedAlert
-          ? pool([
-            'Báo tốc độ đang tắt rồi đấy, bạn có muốn mình bật lại không?',
-            'Mình tắt báo tốc độ từ trước rồi mà, bạn cần bật lại nhé?',
-          ])
-          : null;
       case 'ENABLE_HOTSPOT_ALERT':
         return toggles.hotspotAlert
           ? pool([
@@ -1015,14 +1002,14 @@ function App() {
           ])
           : null;
       case 'ENABLE_VIOLATION_ALERTS':
-        return toggles.speedAlert && toggles.hotspotAlert
+        return toggles.hotspotAlert
           ? pool([
             'Cảnh báo đang bật rồi, bạn có muốn mình hỗ trợ gì cứ nói nhé.',
             'Mình đang bật cảnh báo đầy đủ cho bạn rồi đó, bạn cần gì cứ bảo.',
           ])
           : null;
       case 'DISABLE_VIOLATION_ALERTS':
-        return !toggles.speedAlert && !toggles.hotspotAlert
+        return !toggles.hotspotAlert
           ? pool([
             'Cảnh báo đang tắt rồi, bạn có muốn mình hỗ trợ gì cứ nói nhé.',
             'Mình tắt cảnh báo từ trước rồi đó, bạn cần gì cứ bảo.',
@@ -1157,20 +1144,14 @@ function App() {
       case 'REPEAT_DRIVE_ALERT':
         setFocusedCard('drive-alert');
         return;
-      case 'ENABLE_SPEED_ALERT':
-        updateToggle('speedAlert', true);
-        return;
-      case 'DISABLE_SPEED_ALERT':
-        updateToggle('speedAlert', false);
-        return;
       case 'ENABLE_HOTSPOT_ALERT':
         updateToggle('hotspotAlert', true);
         return;
       case 'ENABLE_VIOLATION_ALERTS':
-        setToggles((current) => ({ ...current, speedAlert: true, hotspotAlert: true }));
+        updateToggle('hotspotAlert', true);
         return;
       case 'DISABLE_VIOLATION_ALERTS':
-        setToggles((current) => ({ ...current, speedAlert: false, hotspotAlert: false }));
+        updateToggle('hotspotAlert', false);
         return;
       case 'SWITCH_NEXT_CHANNEL':
         const nextId = radioChannels[(radioChannelIndex + 1) % radioChannels.length]?.id;
