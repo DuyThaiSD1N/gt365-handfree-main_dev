@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import { createServer } from 'node:http';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { setupASRProxy } from './ws/asr-proxy.js';
 import { setupTTSProxy } from './ws/tts-proxy.js';
 import { intentLlmHandler, isLlmEnabled } from './ws/intent-http.js';
@@ -12,6 +15,22 @@ for (const envPath of ['.env.local', '.env', 'be/.env.local', 'be/.env']) {
   dotenv.config({ path: envPath, override: false });
 }
 
+// ── Dấu vân tay build ────────────────────────────────────────────────────
+// Để biết CHẮC tiến trình đang phục vụ domain chạy từ commit nào, thư mục nào.
+// Bump BUILD_TAG mỗi lần có thay đổi hành vi đáng kể để kiểm tra deploy trong 2 giây.
+const BUILD_TAG = 'hotspot-alert-sync-2026-08-13';
+const BUILD_COMMIT = (() => {
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      cwd: resolve(dirname(fileURLToPath(import.meta.url)), '..', '..'),
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString().trim();
+  } catch {
+    return 'unknown';
+  }
+})();
+const STARTED_AT = new Date().toISOString();
+
 const app = express();
 app.use(express.json({ limit: '64kb' }));
 
@@ -20,6 +39,13 @@ app.get('/api/voice-health', (_request, response) => {
     status: 'ok',
     service: 'gt365-voice-bridge',
     timestamp: new Date().toISOString(),
+    build: {
+      tag: BUILD_TAG,
+      commit: BUILD_COMMIT,
+      startedAt: STARTED_AT,
+      cwd: process.cwd(),
+      pid: process.pid,
+    },
     asr: {
       vi: process.env.ASR_GRPC_URI || '103.253.20.28:9112',
       hmong: process.env.ASR_HMONG_GRPC_URI || '103.253.20.28:9113',
@@ -96,5 +122,7 @@ server.listen(port, host, () => {
   console.log('='.repeat(58));
   console.log(`GT365 voice bridge running at http://${host}:${port}`);
   console.log('WebSocket endpoints: /ws/asr, /ws/tts');
+  console.log(`BUILD: ${BUILD_TAG} | commit=${BUILD_COMMIT} | pid=${process.pid}`);
+  console.log(`CWD:   ${process.cwd()}`);
   console.log('='.repeat(58));
 });

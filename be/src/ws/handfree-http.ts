@@ -246,8 +246,8 @@ type HandfreeResponse =
       nextScreen?: ScreenId;
       channelId?: string;
       channelName?: string;
-      target?: 'hotspotAlert'; // toggle app cần ghi (tên field đúng như Android)
-      value?: boolean;         // giá trị cần ghi vào toggle đó
+      target?: 'hotspotAlertEnabled'; // toggle app cần ghi
+      value?: boolean;                // giá trị cần ghi vào toggle đó
     };
     meta: ResponseMeta;
     state?: ResponseState;
@@ -293,10 +293,10 @@ type ResponseMeta = {
   latencyMs: number;
 };
 
-// Trạng thái toggle dùng đúng tên field của Android (hotspotAlert),
-// là trạng thái app NÊN có SAU khi xử lý response này.
+// Trạng thái toggle cảnh báo điểm nóng app NÊN có SAU khi xử lý response này.
+// Tên field trùng với tên request nhận vào để hai chiều đọc giống nhau.
 type ResponseState = {
-  hotspotAlert: boolean;
+  hotspotAlertEnabled: boolean;
 };
 
 // Action nào ghi vào toggle cảnh báo điểm nóng, và ghi giá trị gì.
@@ -310,9 +310,9 @@ const HOTSPOT_ACTION_VALUE: Partial<Record<ActionCode, boolean>> = {
 // Gắn `state` vào mọi response để Android chỉ việc set toggle theo, không phải map tên action.
 function withState(response: HandfreeResponse, p: ParsedBody): HandfreeResponse {
   const applied = response.type === 'action' ? HOTSPOT_ACTION_VALUE[response.action.code] : undefined;
-  const hotspotAlert = applied ?? p.hotspotAlertEnabled;
-  if (typeof hotspotAlert !== 'boolean') return response;
-  return { ...response, state: { hotspotAlert } };
+  const hotspotAlertEnabled = applied ?? p.hotspotAlertEnabled;
+  if (typeof hotspotAlertEnabled !== 'boolean') return response;
+  return { ...response, state: { hotspotAlertEnabled } };
 }
 
 const VALID_SCREENS: readonly ScreenId[] = [
@@ -379,6 +379,15 @@ const FALLBACK_REPLIES_SECOND = [
 const cache = new Map<string, { res: HandfreeResponse; expiresAt: number }>();
 const rateMap = new Map<string, number[]>();
 
+// Hash ngắn để nhét context/danh sách kênh vào cache key mà key không phình to.
+function shortHash(value: string): string {
+  let h = 0;
+  for (let i = 0; i < value.length; i++) {
+    h = ((h << 5) - h + value.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h).toString(36);
+}
+
 function cacheKey(p: ParsedBody): string {
   const pendingKey = p.pending ? `:p=${p.pending.intentCode}` : '';
   const stateKey = p.assistantState !== 'idle' ? `:s=${p.assistantState}` : '';
@@ -387,7 +396,17 @@ function cacheKey(p: ParsedBody): string {
   // (ví dụ: cùng câu "tắt cảnh báo" nhưng trạng thái alert ON/OFF khác nhau).
   const hotspotKey = typeof p.hotspotAlertEnabled === 'boolean' ? `:hot=${p.hotspotAlertEnabled ? 1 : 0}` : '';
   const radioKey = typeof p.radioPlaying === 'boolean' ? `:radio=${p.radioPlaying ? 1 : 0}` : '';
-  return `${p.text.trim().toLowerCase()}|${p.screen}${pendingKey}${stateKey}${channelKey}${hotspotKey}${radioKey}`;
+  // Reply có nội suy {plate}, {channelName}, {notificationCount}... nên context PHẢI nằm trong key,
+  // nếu không user B sẽ nghe lại câu chứa biển số của user A trong 5 phút TTL.
+  const contextEntries = Object.entries(p.context)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .sort(([a], [b]) => a.localeCompare(b));
+  const contextKey = contextEntries.length > 0 ? `:ctx=${shortHash(JSON.stringify(contextEntries))}` : '';
+  // Danh sách kênh do app gửi lên quyết định kết quả tìm kênh theo tên / next / prev.
+  const channelsKey = p.channels && p.channels.length > 0
+    ? `:chs=${shortHash(p.channels.map((c) => c.id).join(','))}`
+    : '';
+  return `${p.text.trim().toLowerCase()}|${p.screen}${pendingKey}${stateKey}${channelKey}${hotspotKey}${radioKey}${contextKey}${channelsKey}`;
 }
 
 function getCached(key: string): HandfreeResponse | null {
@@ -638,7 +657,7 @@ function buildActionResponse(
       ...(action.nextScreen ? { nextScreen: action.nextScreen } : {}),
       // Nói thẳng toggle nào cần ghi để client không phải map action code sang tên field.
       ...(typeof hotspotValue === 'boolean'
-        ? { target: 'hotspotAlert' as const, value: hotspotValue }
+        ? { target: 'hotspotAlertEnabled' as const, value: hotspotValue }
         : {}),
     },
     meta,

@@ -137,7 +137,7 @@ App cần:
 
 ##### 2.1.1 `action.target` / `action.value` / `state` — đồng bộ tên field với app
 
-Với các lệnh bật/tắt toggle, response nói thẳng **toggle nào cần ghi và ghi giá trị gì**, dùng đúng tên field của app (`hotspotAlert`) — app không phải tự map từ `action.code`:
+Với các lệnh bật/tắt toggle, response nói thẳng **toggle nào cần ghi và ghi giá trị gì** — app không phải tự map từ `action.code`. Tên field trả về trùng với tên field ở request (`hotspotAlertEnabled`) để hai chiều đọc giống nhau:
 
 ```json
 {
@@ -145,18 +145,18 @@ Với các lệnh bật/tắt toggle, response nói thẳng **toggle nào cần 
   "reply": "Mình tắt cảnh báo điểm nóng cho bạn rồi đấy, bạn lái cẩn thận giùm mình nhé.",
   "action": {
     "code": "DISABLE_VIOLATION_ALERTS",
-    "target": "hotspotAlert",
+    "target": "hotspotAlertEnabled",
     "value": false
   },
-  "state": { "hotspotAlert": false }
+  "state": { "hotspotAlertEnabled": false }
 }
 ```
 
 | Field | Có ở | Ý nghĩa |
 |---|---|---|
-| `action.target` | chỉ action ghi toggle | Tên field trong app cần ghi. Hiện chỉ có `"hotspotAlert"`. |
-| `action.value` | chỉ action ghi toggle | Giá trị cần ghi (`true`/`false`). App chỉ việc `hotspotAlert = value`. |
-| `state.hotspotAlert` | **mọi** response (`action`/`confirm`/`noop`/`clarification`/`fallback`) | Trạng thái toggle mà app **nên có sau khi xử lý response này**. Với action bật/tắt là giá trị mới; các type còn lại là giá trị hiện tại app vừa gửi lên. Dùng để đối chiếu, phát hiện lệch state giữa app và server. |
+| `action.target` | chỉ action ghi toggle | Tên field trong app cần ghi. Hiện chỉ có `"hotspotAlertEnabled"`. |
+| `action.value` | chỉ action ghi toggle | Giá trị cần ghi (`true`/`false`). App chỉ việc `hotspotAlertEnabled = value`. |
+| `state.hotspotAlertEnabled` | **mọi** response (`action`/`confirm`/`noop`/`clarification`/`fallback`) | Trạng thái toggle mà app **nên có sau khi xử lý response này**. Với action bật/tắt là giá trị mới; các type còn lại là giá trị hiện tại app vừa gửi lên. Dùng để đối chiếu, phát hiện lệch state giữa app và server. |
 
 - `action.code` **giữ nguyên** tên cũ (`ENABLE_VIOLATION_ALERTS` / `DISABLE_VIOLATION_ALERTS`) → app bản cũ không bị vỡ.
 - `state` bị **bỏ khỏi response** nếu request không gửi trạng thái lên (server không đoán mò).
@@ -200,7 +200,7 @@ Server xử lý turn confirm tiếp theo:
     "openMicAfterReply": true,
     "silenceTimeoutSeconds": 5
   },
-  "state": { "hotspotAlert": false },
+  "state": { "hotspotAlertEnabled": false },
   "meta": {
     "intentCode": "VIOLATION_ALERT_OFF",
     "confidence": 1.0,
