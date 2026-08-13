@@ -20,7 +20,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'all',
     actionCode: 'CLOSE_ASSISTANT',
     feedback: [
-      'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
+      'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.', // v2
     ],
   },
   // ── ASSISTANT_HELP - Context-aware help per screen ─────────────────────

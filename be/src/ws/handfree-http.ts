@@ -231,7 +231,6 @@ type ParsedBody = {
   currentChannelId?: string | null;
   currentGroupId?: string | null;
   radioPlaying?: boolean;
-  speedAlertEnabled?: boolean;   // trạng thái cảnh báo tốc độ từ app
   hotspotAlertEnabled?: boolean; // trạng thái cảnh báo điểm nóng từ app
   consecutiveFallbacks?: number;
   channels?: { id: string; name: string }[] | null;
@@ -316,10 +315,9 @@ function cacheKey(p: ParsedBody): string {
   const channelKey = p.currentChannelId ? `:ch=${p.currentChannelId}` : '';
   // State-aware cache key để tránh trả response sai ngữ cảnh
   // (ví dụ: cùng câu "tắt cảnh báo" nhưng trạng thái alert ON/OFF khác nhau).
-  const speedKey = typeof p.speedAlertEnabled === 'boolean' ? `:spd=${p.speedAlertEnabled ? 1 : 0}` : '';
   const hotspotKey = typeof p.hotspotAlertEnabled === 'boolean' ? `:hot=${p.hotspotAlertEnabled ? 1 : 0}` : '';
   const radioKey = typeof p.radioPlaying === 'boolean' ? `:radio=${p.radioPlaying ? 1 : 0}` : '';
-  return `${p.text.trim().toLowerCase()}|${p.screen}${pendingKey}${stateKey}${channelKey}${speedKey}${hotspotKey}${radioKey}`;
+  return `${p.text.trim().toLowerCase()}|${p.screen}${pendingKey}${stateKey}${channelKey}${hotspotKey}${radioKey}`;
 }
 
 function getCached(key: string): HandfreeResponse | null {
@@ -403,8 +401,10 @@ function parseBody(raw: any): ParsedBody | null {
 
   const currentChannelId = typeof raw.currentChannelId === 'string' ? raw.currentChannelId : null;
   const radioPlaying = typeof raw.radioPlaying === 'boolean' ? raw.radioPlaying : undefined;
-  const speedAlertEnabled = typeof raw.speedAlertEnabled === 'boolean' ? raw.speedAlertEnabled : undefined;
-  const hotspotAlertEnabled = typeof raw.hotspotAlertEnabled === 'boolean' ? raw.hotspotAlertEnabled : undefined;
+  // Accept both hotspotAlertEnabled and hotspotAlert (backward compatibility with Android)
+  const hotspotAlertEnabled = typeof raw.hotspotAlertEnabled === 'boolean'
+    ? raw.hotspotAlertEnabled
+    : (typeof raw.hotspotAlert === 'boolean' ? raw.hotspotAlert : undefined);
   const consecutiveFallbacks = typeof raw.consecutiveFallbacks === 'number' ? raw.consecutiveFallbacks : 0;
   // Parse danh sách kênh do Android gửi lên (override JSON fallback)
   // Validate: phải là array, mỗi phần tử có id (string) và name (string)
@@ -424,7 +424,6 @@ function parseBody(raw: any): ParsedBody | null {
     assistantState: typeof raw.assistantState === 'string' ? raw.assistantState : 'idle',
     currentChannelId,
     radioPlaying,
-    speedAlertEnabled,
     hotspotAlertEnabled,
     consecutiveFallbacks,
     channels,
