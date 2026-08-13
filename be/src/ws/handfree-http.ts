@@ -211,6 +211,7 @@ const NOOP_OPEN_MIC_ACTIONS = new Set<ActionCode>([
   'OPEN_ROUTE_SCREEN',
   'ENABLE_VIOLATION_ALERTS',
   'DISABLE_VIOLATION_ALERTS',
+  'ENABLE_HOTSPOT_ALERT',
   'SHOW_HELP',
 ]);
 
@@ -240,8 +241,16 @@ type HandfreeResponse =
   | {
     type: 'action';
     reply: string;
-    action: { code: ActionCode; nextScreen?: ScreenId; channelId?: string; channelName?: string };
+    action: {
+      code: ActionCode;
+      nextScreen?: ScreenId;
+      channelId?: string;
+      channelName?: string;
+      target?: 'hotspotAlert'; // toggle app cần ghi (tên field đúng như Android)
+      value?: boolean;         // giá trị cần ghi vào toggle đó
+    };
     meta: ResponseMeta;
+    state?: ResponseState;
   }
   | {
     type: 'confirm';
@@ -249,6 +258,7 @@ type HandfreeResponse =
     pending: Pending;
     confirmMeta: ConfirmMeta;
     meta: ResponseMeta;
+    state?: ResponseState;
   }
   | {
     type: 'clarification';
@@ -256,12 +266,14 @@ type HandfreeResponse =
     action: { code: ActionCode; nextScreen?: ScreenId };
     openMicAfterReply: boolean; // Tự động mở mic sau khi hỏi
     meta: ResponseMeta;
+    state?: ResponseState;
   }
   | {
     type: 'noop';
     reply: string;
     noopMeta: NoopMeta;
     meta: ResponseMeta;
+    state?: ResponseState;
   }
   | {
     type: 'fallback';
@@ -271,6 +283,7 @@ type HandfreeResponse =
     openMicAfterReply?: boolean; // Mở mic tự động sau khi bot nói xong
     consecutiveFallbacks: number; // Trả về để client track
     meta: ResponseMeta;
+    state?: ResponseState;
   };
 
 type ResponseMeta = {
@@ -280,7 +293,29 @@ type ResponseMeta = {
   latencyMs: number;
 };
 
-const VALID_SCREENS: ReadonlySet<string> = new Set([
+// Trạng thái toggle dùng đúng tên field của Android (hotspotAlert),
+// là trạng thái app NÊN có SAU khi xử lý response này.
+type ResponseState = {
+  hotspotAlert: boolean;
+};
+
+// Action nào ghi vào toggle cảnh báo điểm nóng, và ghi giá trị gì.
+// Dùng chung cho: phát hiện no-op, sinh action.target/value, và field state.
+const HOTSPOT_ACTION_VALUE: Partial<Record<ActionCode, boolean>> = {
+  ENABLE_VIOLATION_ALERTS: true,
+  ENABLE_HOTSPOT_ALERT: true,
+  DISABLE_VIOLATION_ALERTS: false,
+};
+
+// Gắn `state` vào mọi response để Android chỉ việc set toggle theo, không phải map tên action.
+function withState(response: HandfreeResponse, p: ParsedBody): HandfreeResponse {
+  const applied = response.type === 'action' ? HOTSPOT_ACTION_VALUE[response.action.code] : undefined;
+  const hotspotAlert = applied ?? p.hotspotAlertEnabled;
+  if (typeof hotspotAlert !== 'boolean') return response;
+  return { ...response, state: { hotspotAlert } };
+}
+
+const VALID_SCREENS: readonly ScreenId[] = [
   'home',
   'radio',
   'radioOnAir',
@@ -294,7 +329,42 @@ const VALID_SCREENS: ReadonlySet<string> = new Set([
   'insurance',
   'displaySettings',
   'permissionSettings',
-]);
+];
+
+// Bỏ dấu gạch/underscore + hạ chữ thường để "radio_on_air", "RadioOnAir", "radioonair" đều khớp nhau.
+function screenKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// Tên màn hình client gửi lên không phải lúc nào cũng trùng tuyệt đối với ScreenId
+// (số ít/số nhiều, snake_case, tên nội bộ của app). Chuẩn hoá thay vì trả 400 làm bot chết câm.
+const SCREEN_ALIASES: Record<string, ScreenId> = {
+  ...Object.fromEntries(VALID_SCREENS.map((screen) => [screenKey(screen), screen])),
+  main: 'home',
+  trangchu: 'home',
+  utility: 'utilities',
+  util: 'utilities',
+  tienich: 'utilities',
+  notification: 'notifications',
+  thongbao: 'notifications',
+  account: 'profile',
+  taikhoan: 'profile',
+  setting: 'displaySettings',
+  settings: 'displaySettings',
+  displaysetting: 'displaySettings',
+  notificationsettings: 'displaySettings',
+  permission: 'permissionSettings',
+  permissionsetting: 'permissionSettings',
+  onair: 'radioOnAir',
+  radioroom: 'radioOnAir',
+  finelookup: 'fineLookup',
+  fineresult: 'fineResult',
+  fine: 'fineLookup',
+};
+
+function normalizeScreen(raw: string): ScreenId | null {
+  return SCREEN_ALIASES[screenKey(raw)] ?? null;
+}
 
 const FALLBACK_REPLIES_FIRST = [
   'Mình chưa nghe rõ lệnh này, bạn nói lại giúp mình nhé.',
@@ -347,16 +417,32 @@ function rateAllow(ip: string): boolean {
   return true;
 }
 
+// Đọc boolean từ nhiều nguồn/alias khác nhau (Android, web, doc cũ).
+// Chấp nhận cả string "true"/"false" cho chắc.
+function readBool(...values: unknown[]): boolean | undefined {
+  for (const value of values) {
+    if (typeof value === 'boolean') return value;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+  }
+  return undefined;
+}
+
 function parseBody(raw: any): ParsedBody | null {
   if (!raw || typeof raw !== 'object') return null;
   const text = typeof raw.text === 'string' ? raw.text.trim() : '';
-  const screen = typeof raw.screen === 'string' ? raw.screen : '';
+  const rawScreen = typeof raw.screen === 'string' ? raw.screen.trim() : '';
 
   const hasPending = raw.pending && typeof raw.pending === 'object';
 
   // ✅ CHO PHÉP text rỗng (im lặng) - sẽ xử lý ở handler
-  // Chỉ reject nếu thiếu screen hoặc screen không hợp lệ
-  if (!screen || !VALID_SCREENS.has(screen)) return null;
+  // Thiếu hẳn screen mới reject; sai chính tả/khác quy ước thì chuẩn hoá rồi vẫn phục vụ,
+  // vì trả 400 đồng nghĩa bot im lặng hoàn toàn trên màn đó.
+  if (!rawScreen) return null;
+  const screen = normalizeScreen(rawScreen);
+  if (!screen) {
+    console.warn(`[handfree] ⚠️ screen lạ "${rawScreen}" → tạm dùng "home". Client nên gửi đúng ScreenId.`);
+  }
 
   let pending: Pending | null = null;
   if (raw.pending && typeof raw.pending === 'object') {
@@ -399,12 +485,27 @@ function parseBody(raw: any): ParsedBody | null {
     }
   }
 
-  const currentChannelId = typeof raw.currentChannelId === 'string' ? raw.currentChannelId : null;
-  const radioPlaying = typeof raw.radioPlaying === 'boolean' ? raw.radioPlaying : undefined;
-  // Accept both hotspotAlertEnabled and hotspotAlert (backward compatibility with Android)
-  const hotspotAlertEnabled = typeof raw.hotspotAlertEnabled === 'boolean'
-    ? raw.hotspotAlertEnabled
-    : (typeof raw.hotspotAlert === 'boolean' ? raw.hotspotAlert : undefined);
+  // Trạng thái runtime có thể nằm ở top-level (web) hoặc trong context (Android).
+  const rawContext: Record<string, unknown> =
+    raw.context && typeof raw.context === 'object' ? (raw.context as Record<string, unknown>) : {};
+
+  const currentChannelId =
+    typeof raw.currentChannelId === 'string'
+      ? raw.currentChannelId
+      : (typeof rawContext.currentChannelId === 'string' ? (rawContext.currentChannelId as string) : null);
+  const radioPlaying = readBool(raw.radioPlaying, rawContext.radioPlaying);
+  // Cảnh báo điểm nóng: chấp nhận mọi alias top-level lẫn trong context
+  // (Android đang gửi context.hotspotAlert — trước đây BE bỏ qua nên không phát hiện được no-op).
+  const hotspotAlertEnabled = readBool(
+    raw.hotspotAlertEnabled,
+    raw.hotspotAlert,
+    raw.violationAlertEnabled,
+    raw.alertEnabled,
+    rawContext.hotspotAlertEnabled,
+    rawContext.hotspotAlert,
+    rawContext.violationAlertEnabled,
+    rawContext.alertEnabled,
+  );
   const consecutiveFallbacks = typeof raw.consecutiveFallbacks === 'number' ? raw.consecutiveFallbacks : 0;
   // Parse danh sách kênh do Android gửi lên (override JSON fallback)
   // Validate: phải là array, mỗi phần tử có id (string) và name (string)
@@ -417,7 +518,7 @@ function parseBody(raw: any): ParsedBody | null {
   }
   return {
     text,
-    screen: screen as ScreenId,
+    screen: screen ?? 'home',
     pending,
     context,
     recentActions,
@@ -528,12 +629,17 @@ function buildActionResponse(
 
   const template = pickFeedback(action.feedback, p.text);
   const reply = interpolate(template, p.context);
+  const hotspotValue = HOTSPOT_ACTION_VALUE[action.actionCode];
   return {
     type: 'action',
     reply,
     action: {
       code: action.actionCode,
       ...(action.nextScreen ? { nextScreen: action.nextScreen } : {}),
+      // Nói thẳng toggle nào cần ghi để client không phải map action code sang tên field.
+      ...(typeof hotspotValue === 'boolean'
+        ? { target: 'hotspotAlert' as const, value: hotspotValue }
+        : {}),
     },
     meta,
   };
@@ -610,7 +716,7 @@ function buildNoopResponse(
   actionCode: ActionCode,
   latencyMs: number,
 ): HandfreeResponse {
-  const reply = interpolate(noopReplyFor(actionCode, p.context), p.context);
+  const reply = interpolate(pickFeedback(noopReplyFor(actionCode, p.context), p.text), p.context);
   return {
     type: 'noop',
     reply,
@@ -619,7 +725,7 @@ function buildNoopResponse(
   };
 }
 
-function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string {
+function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string | string[] {
   switch (actionCode) {
     case 'PLAY_RADIO':
       return ctx.channelName
@@ -649,10 +755,17 @@ function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string {
       return 'Mình đang ở Cài đặt hiển thị rồi đó, bạn cần chỉnh gì cứ bảo nhé.';
     case 'OPEN_PERMISSION_SETTINGS':
       return 'Mình đang ở Quản lý quyền rồi nhé, bạn cần cấp quyền gì cứ nói.';
+    case 'ENABLE_HOTSPOT_ALERT':
     case 'ENABLE_VIOLATION_ALERTS':
-      return 'Cảnh báo đang bật rồi, bạn có muốn mình hỗ trợ gì cứ nói nhé.';
+      return [
+        'Cảnh báo điểm nóng đã bật rồi mà, bạn cần gì nữa cứ nói nhé.',
+        'Cảnh báo điểm nóng đang bật sẵn rồi đó, bạn cứ yên tâm lái, cần gì cứ bảo mình.',
+      ];
     case 'DISABLE_VIOLATION_ALERTS':
-      return 'Cảnh báo đang tắt rồi, bạn có muốn mình hỗ trợ gì cứ nói nhé.';
+      return [
+        'Cảnh báo điểm nóng đã tắt rồi mà, bạn cần gì nữa cứ nói nhé.',
+        'Cảnh báo điểm nóng đang tắt sẵn rồi đó, bạn cần bật lại thì bảo mình nha.',
+      ];
     case 'MUTE_MIC':
       return 'Mic đang tắt rồi mà, cần bật lại bạn cứ bảo mình.';
     case 'UNMUTE_MIC':
@@ -683,6 +796,15 @@ const SCREEN_NOOP_MAP: Partial<Record<ActionCode, ScreenId>> = {
 function isScreenNoop(actionCode: ActionCode, screen: ScreenId): boolean {
   const noopScreen = SCREEN_NOOP_MAP[actionCode];
   return noopScreen !== undefined && noopScreen === screen;
+}
+
+// Lệnh bật/tắt cảnh báo là idempotent: nếu app đã ở đúng trạng thái rồi thì
+// KHÔNG hỏi xác nhận, chỉ báo lại trạng thái hiện tại rồi mở mic chờ lệnh mới.
+// Trả về undefined-safe: chỉ coi là no-op khi client thực sự gửi trạng thái lên.
+function isAlertStateNoop(actionCode: ActionCode, hotspotAlertEnabled: boolean | undefined): boolean {
+  if (typeof hotspotAlertEnabled !== 'boolean') return false;
+  const wanted = HOTSPOT_ACTION_VALUE[actionCode];
+  return typeof wanted === 'boolean' && wanted === hotspotAlertEnabled;
 }
 
 function isRecentSameAction(action: ScreenAction, recent: RecentActionItem[]): boolean {
@@ -782,18 +904,34 @@ export function handfreeCommandHandler(): RequestHandler {
       return;
     }
 
+    // Mọi response đều đi qua đây để được gắn `state` (trạng thái toggle app nên có sau response).
+    const send = (payload: HandfreeResponse): void => {
+      res.json(withState(payload, parsed));
+    };
+
     // ✅ DEBUG LOG: Track Android vs Web requests
     const userAgent = req.headers['user-agent'] || 'unknown';
     const isAndroid = userAgent.toLowerCase().includes('android');
     console.log(`[handfree] 📥 ${isAndroid ? 'ANDROID' : 'WEB'} request from IP=${ip}`);
     console.log(`  text="${parsed.text}" screen="${parsed.screen}" state="${parsed.assistantState}"`);
     console.log(`  pending=${parsed.pending ? JSON.stringify(parsed.pending) : 'null'}`);
+    // Log trạng thái runtime để chẩn đoán no-op (client có gửi state lên hay không).
+    const rawBody = (req.body || {}) as Record<string, unknown>;
+    const rawCtx = (rawBody.context && typeof rawBody.context === 'object'
+      ? rawBody.context
+      : {}) as Record<string, unknown>;
+    console.log(
+      `  state: hotspotAlertEnabled=${parsed.hotspotAlertEnabled ?? 'MISSING'}` +
+      ` radioPlaying=${parsed.radioPlaying ?? 'MISSING'}` +
+      ` | bodyKeys=[${Object.keys(rawBody).join(',')}]` +
+      ` contextKeys=[${Object.keys(rawCtx).join(',')}]`,
+    );
 
     const key = cacheKey(parsed);
     const cached = getCached(key);
     if (cached) {
       console.log(`[handfree] ✓ cache "${parsed.text}" screen=${parsed.screen} type=${cached.type}`);
-      res.json(cached);
+      send(cached);
       return;
     }
 
@@ -819,7 +957,7 @@ export function handfreeCommandHandler(): RequestHandler {
         },
       };
       console.log(`[handfree] ✓ silence-idle (text="${parsed.text}", normalized="${normalizedText}") → closing assistant`);
-      res.json(silenceResponse);
+      send(silenceResponse);
       return;
     }
 
@@ -843,7 +981,7 @@ export function handfreeCommandHandler(): RequestHandler {
           },
         };
         console.log(`[handfree] ✓ confirm-silence-retry ${pending.intentCode}`);
-        res.json(silenceRetryResponse);
+        send(silenceRetryResponse);
         return;
       }
 
@@ -866,6 +1004,21 @@ export function handfreeCommandHandler(): RequestHandler {
       if (isStrictYes) {
         const action = resolveAction(pending.intentCode, parsed.screen, false);
         if (action) {
+          // Pending cũ (client giữ lại từ turn trước) nhưng trạng thái đã đúng rồi
+          // → không thực thi lại, chỉ báo trạng thái hiện tại.
+          if (isAlertStateNoop(action.actionCode, parsed.hotspotAlertEnabled)) {
+            const noopResponse = buildNoopResponse(
+              parsed,
+              pending.intentCode,
+              action.actionCode,
+              Date.now() - startedAt,
+            );
+            console.log(
+              `[handfree] ✓ confirm-yes-alert-noop ${pending.intentCode} (hotspotAlertEnabled=${parsed.hotspotAlertEnabled})`,
+            );
+            send(noopResponse);
+            return;
+          }
           const response = buildActionResponse(action, parsed, {
             intentCode: pending.intentCode,
             confidence: 1,
@@ -874,7 +1027,7 @@ export function handfreeCommandHandler(): RequestHandler {
           });
           setCached(key, response);
           console.log(`[handfree] ✓ confirm-yes ${pending.intentCode} (${response.meta.latencyMs}ms)`);
-          res.json(response);
+          send(response);
           return;
         }
       }
@@ -896,7 +1049,7 @@ export function handfreeCommandHandler(): RequestHandler {
         };
         setCached(key, response);
         console.log(`[handfree] ✓ confirm-no (${response.meta.latencyMs}ms)`);
-        res.json(response);
+        send(response);
         return;
       }
       // Pending nhưng user nói lệnh khác → nhắc lại yêu cầu xác nhận, không xử lý lệnh mới.
@@ -918,7 +1071,7 @@ export function handfreeCommandHandler(): RequestHandler {
           latencyMs: Date.now() - startedAt,
         },
       };
-      res.json(confirmOnlyResponse);
+      send(confirmOnlyResponse);
       return;
     }
 
@@ -981,7 +1134,7 @@ export function handfreeCommandHandler(): RequestHandler {
       const response = buildFallbackResponse(parsed, Date.now() - startedAt);
       // KHÔNG cache fallback - cần phản hồi dynamic theo consecutiveFallbacks
       console.log(`[handfree] ✗ fallback "${parsed.text}" screen=${parsed.screen} (${response.meta.latencyMs}ms, llm=${llmLatency}ms, count=${(parsed.consecutiveFallbacks || 0) + 1})`);
-      res.json(response);
+      send(response);
       return;
     }
 
@@ -992,7 +1145,7 @@ export function handfreeCommandHandler(): RequestHandler {
       const response = buildFallbackResponse(parsed, Date.now() - startedAt);
       // KHÔNG cache fallback - cần phản hồi dynamic theo consecutiveFallbacks
       console.log(`[handfree] ✗ no-action ${intentCode} screen=${parsed.screen} (count=${(parsed.consecutiveFallbacks || 0) + 1})`);
-      res.json(response);
+      send(response);
       return;
     }
 
@@ -1008,7 +1161,7 @@ export function handfreeCommandHandler(): RequestHandler {
       );
       setCached(key, response);
       console.log(`[handfree] ✓ screen-noop ${intentCode} action=${action.actionCode} screen=${parsed.screen}`);
-      res.json(response);
+      send(response);
       return;
     }
 
@@ -1022,39 +1175,19 @@ export function handfreeCommandHandler(): RequestHandler {
       );
       setCached(key, response);
       console.log(`[handfree] ✓ noop ${intentCode} action=${action.actionCode}`);
-      res.json(response);
+      send(response);
       return;
     }
 
-    // No-op cảnh báo: chỉ check hotspotAlert (cảnh báo điểm nóng)
-    // Không quan tâm đến speedAlert
-    if (action.actionCode === 'ENABLE_VIOLATION_ALERTS') {
-      // ✅ Chỉ NOOP khi cảnh báo điểm nóng đã bật rồi
-      if (parsed.hotspotAlertEnabled === true) {
-        const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
-        setCached(key, response);
-        console.log(`[handfree] ✓ alert-noop ENABLE (hotspot already on: ${parsed.hotspotAlertEnabled})`);
-        res.json(response);
-        return;
-      }
-    }
-
-    if (action.actionCode === 'DISABLE_VIOLATION_ALERTS') {
-      // ✅ Chỉ NOOP khi cảnh báo điểm nóng đã tắt rồi
-      if (parsed.hotspotAlertEnabled === false) {
-        const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
-        setCached(key, response);
-        console.log(`[handfree] ✓ alert-noop DISABLE (hotspot already off: ${parsed.hotspotAlertEnabled})`);
-        res.json(response);
-        return;
-      }
-    }
-
-    if (action.actionCode === 'ENABLE_HOTSPOT_ALERT' && parsed.hotspotAlertEnabled === true) {
+    // No-op cảnh báo: chỉ check hotspotAlert (cảnh báo điểm nóng), không quan tâm speedAlert.
+    // Phải chặn TRƯỚC nhánh confirm bên dưới — nếu trạng thái đã đúng thì không hỏi xác nhận.
+    if (isAlertStateNoop(action.actionCode, parsed.hotspotAlertEnabled)) {
       const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
       setCached(key, response);
-      console.log(`[handfree] ✓ alert-noop ENABLE_HOTSPOT (already on)`);
-      res.json(response);
+      console.log(
+        `[handfree] ✓ alert-noop ${action.actionCode} (hotspotAlertEnabled=${parsed.hotspotAlertEnabled})`,
+      );
+      send(response);
       return;
     }
 
@@ -1074,7 +1207,7 @@ export function handfreeCommandHandler(): RequestHandler {
         { intentCode, confidence, source, latencyMs: Date.now() - startedAt },
       );
       console.log(`[handfree] ✓ clarification ${intentCode} (radio already playing)`);
-      res.json(response);
+      send(response);
       return;
     }
 
@@ -1087,7 +1220,7 @@ export function handfreeCommandHandler(): RequestHandler {
         { intentCode, confidence, source, latencyMs: Date.now() - startedAt },
       );
       console.log(`[handfree] ✓ clarification ${intentCode} (radio already paused)`);
-      res.json(response);
+      send(response);
       return;
     }
 
@@ -1103,7 +1236,7 @@ export function handfreeCommandHandler(): RequestHandler {
       );
       setCached(key, response);
       console.log(`[handfree] ✓ confirm ${intentCode} (source=${source})`);
-      res.json(response);
+      send(response);
       return;
     }
 
@@ -1117,6 +1250,6 @@ export function handfreeCommandHandler(): RequestHandler {
     console.log(
       `[handfree] ✓ action ${intentCode}→${action.actionCode} conf=${confidence.toFixed(2)} src=${source} (${response.meta.latencyMs}ms)`,
     );
-    res.json(response);
+    send(response);
   };
 }

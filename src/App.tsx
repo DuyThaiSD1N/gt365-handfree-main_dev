@@ -1314,7 +1314,7 @@ function App() {
             recentActions,
             currentChannelId,
             radioPlaying,
-            speedAlertEnabled: toggles.speedAlert,
+            // BE chỉ xét cảnh báo điểm nóng — không có lệnh voice nào đổi cảnh báo tốc độ.
             hotspotAlertEnabled: toggles.hotspotAlert,
             channels: radioChannels,
             consecutiveFallbacks: fallbackCount,

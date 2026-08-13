@@ -111,8 +111,8 @@ export const screenActions: ScreenAction[] = [
     screen: 'displaySettings',
     actionCode: 'SHOW_HELP',
     feedback: [
-      'Mình có thể giúp bạn bật/tắt cảnh báo tốc độ, cảnh báo điểm nóng, hoặc quay lại nha.',
-      'Bạn có thể bảo mình bật/tắt các loại cảnh báo, hoặc quay về trang trước nha.',
+      'Mình có thể giúp bạn bật hoặc tắt cảnh báo điểm nóng, hoặc quay lại nha.',
+      'Bạn có thể bảo mình bật/tắt cảnh báo điểm nóng, hoặc quay về trang trước nha.',
     ],
   },
   {
@@ -361,7 +361,8 @@ export const screenActions: ScreenAction[] = [
     ],
     requiresConfirmation: true,
     confirmPrompt: [
-      'Mình bật cảnh báo cho bạn nha ạ?',
+      'Mình bật cảnh báo điểm nóng cho bạn nhé?',
+      'Mình bật cảnh báo điểm nóng cho bạn nha ạ?',
     ],
     riskLevel: 'caution',
   },
@@ -393,6 +394,13 @@ export const screenActions: ScreenAction[] = [
       'Mình bật báo điểm nóng cho bạn rồi nhé.',
       'Báo điểm nóng đang chạy cho bạn rồi đó, có gì mình kêu bạn liền.',
     ],
+    // Cùng tác dụng với VIOLATION_ALERT_ON nên phải cùng luồng xác nhận.
+    requiresConfirmation: true,
+    confirmPrompt: [
+      'Mình bật cảnh báo điểm nóng cho bạn nhé?',
+      'Mình bật cảnh báo điểm nóng cho bạn nha ạ?',
+    ],
+    riskLevel: 'caution',
   },
 
   // ── Nhóm 7: Reports ──────────────────────────────────────────────────────

@@ -79,6 +79,13 @@ App gửi text user vừa nói, nhận về action code + reply.
 | `pending` | object \| null | optional | Nếu user đang ở trạng thái xác nhận (vừa nhận response `type:"confirm"` ở turn trước), gửi lại object pending để server biết. |
 | `context` | object | optional | Slot động để personalize reply. Server interpolate `{plate}`, `{channelName}`,…vào câu phản hồi. |
 | `recentActions` | array | optional | Tối đa 3 action gần nhất user đã thực hiện. Giúp server debounce + cải thiện độ chính xác LLM. |
+| `hotspotAlertEnabled` | boolean | **khuyến nghị** | Trạng thái cảnh báo điểm nóng hiện tại trong app. Bắt buộc phải gửi nếu muốn server phát hiện no-op cho lệnh bật/tắt cảnh báo. Alias được chấp nhận: `hotspotAlert`, `violationAlertEnabled`, `alertEnabled`, và bản trong `context` (`context.hotspotAlert`,…). |
+| `radioPlaying` | boolean | optional | Radio đang phát hay không. Dùng để phát hiện no-op/clarification cho `RADIO_PLAY` / `RADIO_PAUSE`. Cũng chấp nhận `context.radioPlaying`. |
+| `currentChannelId` | string | optional | ID kênh đang phát, để server tính kênh tiếp/trước. Cũng chấp nhận `context.currentChannelId`. |
+| `channels` | array | optional | Danh sách kênh `{ id, name }` của app — override danh sách mặc định của server khi match kênh theo tên. |
+| `consecutiveFallbacks` | number | optional | Số lần fallback liên tiếp phía client, để server quyết định hỏi lại hay đóng trợ lý. |
+
+> **Lưu ý trạng thái bật/tắt**: server chỉ so trạng thái khi client thực sự gửi field lên. Nếu thiếu `hotspotAlertEnabled`, server không biết cảnh báo đang bật hay tắt nên sẽ hỏi xác nhận (`type:"confirm"`) kể cả khi trạng thái đã đúng.
 
 **`pending`** object:
 | Field | Type | Mô tả |
@@ -95,6 +102,8 @@ App gửi text user vừa nói, nhận về action code + reply.
 | `routeDest` | string | Điểm đến của lộ trình. |
 | `notificationCount` | number | Số thông báo chưa đọc. |
 | `nearestGasDistance` | string | Khoảng cách trạm xăng gần nhất. |
+| `hotspotAlert` | boolean | Trạng thái cảnh báo điểm nóng (tương đương `hotspotAlertEnabled` ở top-level). |
+| `radioPlaying` | boolean | Trạng thái radio (tương đương `radioPlaying` ở top-level). |
 
 ---
 
@@ -125,6 +134,33 @@ App cần:
 1. **Đọc `reply` qua TTS** ngay.
 2. **Thực thi `action.code`** (xem §5 cho mapping action → UI behavior).
 3. Nếu có `action.nextScreen` → navigate sang màn hình đó.
+
+##### 2.1.1 `action.target` / `action.value` / `state` — đồng bộ tên field với app
+
+Với các lệnh bật/tắt toggle, response nói thẳng **toggle nào cần ghi và ghi giá trị gì**, dùng đúng tên field của app (`hotspotAlert`) — app không phải tự map từ `action.code`:
+
+```json
+{
+  "type": "action",
+  "reply": "Mình tắt cảnh báo điểm nóng cho bạn rồi đấy, bạn lái cẩn thận giùm mình nhé.",
+  "action": {
+    "code": "DISABLE_VIOLATION_ALERTS",
+    "target": "hotspotAlert",
+    "value": false
+  },
+  "state": { "hotspotAlert": false }
+}
+```
+
+| Field | Có ở | Ý nghĩa |
+|---|---|---|
+| `action.target` | chỉ action ghi toggle | Tên field trong app cần ghi. Hiện chỉ có `"hotspotAlert"`. |
+| `action.value` | chỉ action ghi toggle | Giá trị cần ghi (`true`/`false`). App chỉ việc `hotspotAlert = value`. |
+| `state.hotspotAlert` | **mọi** response (`action`/`confirm`/`noop`/`clarification`/`fallback`) | Trạng thái toggle mà app **nên có sau khi xử lý response này**. Với action bật/tắt là giá trị mới; các type còn lại là giá trị hiện tại app vừa gửi lên. Dùng để đối chiếu, phát hiện lệch state giữa app và server. |
+
+- `action.code` **giữ nguyên** tên cũ (`ENABLE_VIOLATION_ALERTS` / `DISABLE_VIOLATION_ALERTS`) → app bản cũ không bị vỡ.
+- `state` bị **bỏ khỏi response** nếu request không gửi trạng thái lên (server không đoán mò).
+- Action không liên quan toggle (ví dụ `OPEN_HOME_SCREEN`) thì không có `target`/`value`, nhưng vẫn có `state` để app đối chiếu.
 
 ##### 2.2 `type: "confirm"` — Lệnh nguy hiểm, cần user xác nhận
 
@@ -159,11 +195,16 @@ Server xử lý turn confirm tiếp theo:
 ```json
 {
   "type": "noop",
-  "reply": "Đài đang phát VOV Giao thông rồi mà, bạn muốn đổi kênh khác không?",
+  "reply": "Cảnh báo điểm nóng đang tắt sẵn rồi đó, bạn cần bật lại thì bảo mình nha.",
+  "noopMeta": {
+    "openMicAfterReply": true,
+    "silenceTimeoutSeconds": 5
+  },
+  "state": { "hotspotAlert": false },
   "meta": {
-    "intentCode": "RADIO_PLAY",
+    "intentCode": "VIOLATION_ALERT_OFF",
     "confidence": 1.0,
-    "source": "matcher",
+    "source": "noop",
     "latencyMs": 8
   }
 }
@@ -172,6 +213,18 @@ Server xử lý turn confirm tiếp theo:
 App cần:
 1. **Chỉ đọc `reply` qua TTS**.
 2. **KHÔNG** thực thi action nào (vì state đã đúng rồi).
+3. **KHÔNG** lưu `pending` — đây không phải turn xác nhận, tuyệt đối không hỏi "bạn có muốn…?" thêm lần nữa.
+4. Nếu `noopMeta.openMicAfterReply = true` → mở mic lại (quay về `listening`) và chờ tối đa `noopMeta.silenceTimeoutSeconds` giây; im lặng thì đóng trợ lý.
+
+**Bảng hành vi lệnh bật/tắt cảnh báo điểm nóng** (server dựa hoàn toàn vào `hotspotAlertEnabled` app gửi lên):
+
+| Trạng thái trong app | User nói | Response | App làm gì |
+|---|---|---|---|
+| Đang BẬT | "bật cảnh báo" | `noop` — "Cảnh báo điểm nóng đã bật rồi mà…" | TTS reply → mở mic → `listening` |
+| Đang BẬT | "tắt cảnh báo" | `confirm` — "Mình tắt cảnh báo điểm nóng cho bạn nhé?" | TTS reply → lưu `pending` → `confirming` |
+| Đang TẮT | "tắt cảnh báo" | `noop` — "Cảnh báo điểm nóng đã tắt rồi mà…" | TTS reply → mở mic → `listening` |
+| Đang TẮT | "bật cảnh báo" | `confirm` — "Mình bật cảnh báo điểm nóng cho bạn nhé?" | TTS reply → lưu `pending` → `confirming` |
+| Không gửi state | bất kỳ | `confirm` | Server không đoán mò → luôn hỏi xác nhận |
 
 ##### 2.4 `type: "fallback"` — Server không hiểu lệnh
 
@@ -309,7 +362,21 @@ Server → 200
 
 App: chỉ TTS reply, không action.
 
-> **Quan trọng**: app cần truyền `context.channelName` + cần biết trạng thái radio đang phát hay tắt (qua state-track riêng) và gửi server biết qua `recentActions`. Nếu không gửi, server có thể không phát hiện no-op.
+> **Quan trọng**: server chỉ phát hiện no-op khi app gửi trạng thái hiện tại lên. Cụ thể:
+> - Radio: `radioPlaying` (+ `context.channelName`, `currentChannelId`).
+> - Cảnh báo điểm nóng: `hotspotAlertEnabled` (hoặc `context.hotspotAlert`).
+> - Ngoài ra `recentActions` giúp debounce khi user lặp lệnh trong 30 giây.
+>
+> Ví dụ request cho lệnh cảnh báo:
+> ```json
+> {
+>   "text": "tắt cảnh báo",
+>   "screen": "home",
+>   "hotspotAlertEnabled": false,
+>   "context": { "hotspotAlert": false }
+> }
+> ```
+> → server trả `type:"noop"` ("Cảnh báo đang tắt rồi…") thay vì hỏi xác nhận.
 
 ---
 
@@ -349,8 +416,25 @@ App cần truyền `screen` chính xác cho mỗi request. Danh sách hợp lệ
 | `fineLookup` | Tra cứu phạt nguội |
 | `fineResult` | Kết quả phạt nguội |
 | `insurance` | Bảo hiểm xe |
-| `displaySettings` | Cài đặt hiển thị |
+| `displaySettings` | Cài đặt hiển thị (màn "Thông báo & Hiển thị") |
 | `permissionSettings` | Quản lý quyền |
+
+⚠️ **Tiện ích là `utilities` (số nhiều)**, không phải `utility` — và **không phải** `displaySettings`.
+
+**Chuẩn hoá tên màn hình**: server bỏ qua hoa/thường và dấu `-` `_` khi so khớp, nên `radioOnAir` = `radio_on_air` = `RADIOONAIR`. Ngoài ra chấp nhận các alias thường gặp:
+
+| Client gửi | Server hiểu là |
+|---|---|
+| `utility`, `util`, `tienich` | `utilities` |
+| `main`, `trangchu` | `home` |
+| `notification`, `thongbao` | `notifications` |
+| `account`, `taikhoan` | `profile` |
+| `setting`, `settings`, `displaySetting`, `notificationSettings` | `displaySettings` |
+| `permission`, `permissionSetting` | `permissionSettings` |
+| `onAir`, `radioRoom` | `radioOnAir` |
+| `fine` | `fineLookup` |
+
+Tên hoàn toàn lạ → server ghi cảnh báo vào log rồi **tạm coi là `home`** và vẫn trả lời bình thường (thà trả lời hơi lệch ngữ cảnh còn hơn để tài xế nói mà bot im lặng). Chỉ khi **thiếu hẳn** `screen` mới trả `400 invalid-body`.
 
 ---
 
