@@ -9,8 +9,11 @@ const RADIO_CHANNEL_KEYWORDS = ['kenh', 'chuyen muc', 'channel', 'chuyen sang', 
 const LIST_CHANNEL_KEYWORDS = [
   'danh sach', 'liet ke', 'ke ten', 'co nhung', 'co may', 'co gi', 'co san',
   'xem danh sach', 'list', 'bao nhieu kenh', 'co bao nhieu', 'nen nghe',
-  'nghe kenh nao', 'gioi thieu kenh', 'co kenh gi', 'radio co gi',
+  'nghe kenh nao', 'gioi thieu kenh', 'co kenh gi',
   'dang phat', 'dang co', 'hom nay co', 'co gi nghe',
+  // Lưu ý: input đã bị stripTrailingFillers cắt "nào" ở cuối, nên từ khoá phải viết ở dạng ĐÃ CẮT
+  // ("nội dung số có kênh nào" → "noi dung so co kenh").
+  'co kenh nao', 'noi dung so co gi', 'noi dung so co kenh',
 ];
 
 // Các từ khóa chỉ rõ ý chuyển kênh next/prev (không phải mở kênh theo tên)

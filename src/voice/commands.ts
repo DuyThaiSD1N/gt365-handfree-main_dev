@@ -70,7 +70,13 @@ export const commands: CommandDefinition[] = [
   },
   {
     intentCode: 'NAV_RADIO',
-    phrases: ['mở radio', 'vào radio', 'mở nội dung số', 'nghe radio'],
+    phrases: [
+      'mở nội dung số',
+      'vào nội dung số',
+      'nghe nội dung số',
+      'mở mục nội dung số',
+      'vào mục nội dung số',
+    ],
     allowedScreens: 'all',
     dangerLevel: 'safe',
   },
@@ -237,9 +243,9 @@ export const commands: CommandDefinition[] = [
   {
     intentCode: 'RADIO_PLAY',
     phrases: [
-      'phát radio',
-      'bật radio',
-      'cho nghe radio',
+      'phát nội dung số',
+      'bật nội dung số',
+      'cho nghe nội dung số',
       'mở đài',
       'mở đài lên',
       'nghe đài',
@@ -289,13 +295,13 @@ export const commands: CommandDefinition[] = [
   {
     intentCode: 'RADIO_PAUSE',
     phrases: [
-      'tắt radio',
+      'tắt nội dung số',
       'tắt đài',
-      'dừng radio',
+      'dừng nội dung số',
       'dừng đài',
       'tạm dừng',
-      'tạm dừng radio',
-      'im radio',
+      'tạm dừng nội dung số',
+      'im nội dung số',
       'ngưng phát',
       'dừng nhạc',
       'đủ rồi tắt đi',
@@ -312,14 +318,14 @@ export const commands: CommandDefinition[] = [
       'có mấy kênh',
       'có bao nhiêu kênh',
       'kênh nào có sẵn',
-      'radio có kênh nào',
-      'có những kênh radio nào',
-      'kênh radio có gì',
+      'nội dung số có kênh nào',
+      'có những kênh nội dung số nào',
+      'kênh nội dung số có gì',
 
       // Xin danh sách
       'danh sách kênh',
       'danh sách các kênh',
-      'danh sách kênh radio',
+      'danh sách kênh nội dung số',
       'cho tôi danh sách kênh',
       'cho tôi xem danh sách kênh',
       'cho xem danh sách kênh',
@@ -335,7 +341,7 @@ export const commands: CommandDefinition[] = [
       'liệt kê channel',
       'kể tên các kênh',
       'tên các kênh',
-      'các kênh radio',
+      'các kênh nội dung số',
       'các kênh có sẵn',
       'list kênh',
       'list channel',
@@ -353,7 +359,7 @@ export const commands: CommandDefinition[] = [
 
       // Nói ngắn / tự nhiên
       'kênh có gì',
-      'radio có gì',
+      'nội dung số có gì',
       'có gì để nghe',
       'kênh gì',
       'mấy kênh vậy',
