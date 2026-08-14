@@ -200,6 +200,23 @@ type NoopMeta = {
   silenceTimeoutSeconds: number;  // giây chờ mic trước khi đóng nếu không có lệnh
 };
 
+// Kịch bản im lặng: app tự xử lý cục bộ khi mic mở mà không nghe thấy gì,
+// KHÔNG cần gọi API thêm lần nữa. Câu thoại vẫn do server quyết định.
+type SilenceMeta = {
+  timeoutSeconds: number;   // im lặng quá bao lâu thì coi như user không nói gì
+  message: string;          // câu bot đọc khi hết giờ
+  closeAssistant: boolean;  // true = đọc xong thì đóng trợ lý
+};
+
+const SILENCE_MESSAGE =
+  'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.';
+
+const DEFAULT_SILENCE_META: SilenceMeta = {
+  timeoutSeconds: 5,
+  message: SILENCE_MESSAGE,
+  closeAssistant: true,
+};
+
 // ActionCode nào cần mở mic sau noop
 const NOOP_OPEN_MIC_ACTIONS = new Set<ActionCode>([
   'OPEN_HOME_SCREEN',
@@ -251,6 +268,7 @@ type HandfreeResponse =
     };
     meta: ResponseMeta;
     state?: ResponseState;
+    silenceMeta?: SilenceMeta;
   }
   | {
     type: 'confirm';
@@ -259,6 +277,7 @@ type HandfreeResponse =
     confirmMeta: ConfirmMeta;
     meta: ResponseMeta;
     state?: ResponseState;
+    silenceMeta?: SilenceMeta;
   }
   | {
     type: 'clarification';
@@ -267,6 +286,7 @@ type HandfreeResponse =
     openMicAfterReply: boolean; // Tự động mở mic sau khi hỏi
     meta: ResponseMeta;
     state?: ResponseState;
+    silenceMeta?: SilenceMeta;
   }
   | {
     type: 'noop';
@@ -274,6 +294,7 @@ type HandfreeResponse =
     noopMeta: NoopMeta;
     meta: ResponseMeta;
     state?: ResponseState;
+    silenceMeta?: SilenceMeta;
   }
   | {
     type: 'fallback';
@@ -284,6 +305,7 @@ type HandfreeResponse =
     consecutiveFallbacks: number; // Trả về để client track
     meta: ResponseMeta;
     state?: ResponseState;
+    silenceMeta?: SilenceMeta;
   };
 
 type ResponseMeta = {
@@ -306,6 +328,14 @@ const HOTSPOT_ACTION_VALUE: Partial<Record<ActionCode, boolean>> = {
   ENABLE_HOTSPOT_ALERT: true,
   DISABLE_VIOLATION_ALERTS: false,
 };
+
+// Gắn `silenceMeta` để app tự xử lý im lặng tại chỗ, không phải gọi API thêm lần nữa.
+// Riêng `confirm` đã có `confirmMeta` (retryPrompt/cancelMessage/maxSilenceRetries) điều khiển
+// kịch bản im lặng riêng, gắn thêm sẽ mâu thuẫn nên bỏ qua.
+function withSilenceMeta(response: HandfreeResponse): HandfreeResponse {
+  if (response.type === 'confirm') return response;
+  return { ...response, silenceMeta: DEFAULT_SILENCE_META };
+}
 
 // Gắn `state` vào mọi response để Android chỉ việc set toggle theo, không phải map tên action.
 function withState(response: HandfreeResponse, p: ParsedBody): HandfreeResponse {
@@ -923,9 +953,10 @@ export function handfreeCommandHandler(): RequestHandler {
       return;
     }
 
-    // Mọi response đều đi qua đây để được gắn `state` (trạng thái toggle app nên có sau response).
+    // Mọi response đều đi qua đây để được gắn `state` (trạng thái toggle app nên có sau response)
+    // và `silenceMeta` (kịch bản im lặng app tự chạy khi mic mở mà không nghe thấy gì).
     const send = (payload: HandfreeResponse): void => {
-      res.json(withState(payload, parsed));
+      res.json(withSilenceMeta(withState(payload, parsed)));
     };
 
     // ✅ DEBUG LOG: Track Android vs Web requests
@@ -963,7 +994,7 @@ export function handfreeCommandHandler(): RequestHandler {
     if (isLikelySilence && !parsed.pending) {
       const silenceResponse: HandfreeResponse = {
         type: 'fallback',
-        reply: 'Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.',
+        reply: SILENCE_MESSAGE,
         suggestions: [],
         shouldCloseAssistant: true,
         openMicAfterReply: false,

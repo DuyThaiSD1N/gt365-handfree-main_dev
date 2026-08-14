@@ -190,6 +190,26 @@ Server xử lý turn confirm tiếp theo:
 - User nói `"đồng ý"` / `"ok"` / `"ừ"` / `"đúng"` → `type:"action"` với action thực sự.
 - User nói `"không"` / `"hủy"` / `"thôi"` → `type:"action"` với `code:"CANCEL_PENDING"`, app chỉ cần đọc reply rồi quên `pending`.
 
+##### 2.1.2 `silenceMeta` — kịch bản im lặng, app tự chạy không cần gọi API
+
+Server **không thể** biết user đang im lặng — im lặng là sự kiện hết giờ chờ mic, xảy ra hoàn toàn trong app. Nên mọi response (trừ `confirm`) đều kèm sẵn kịch bản để app tự xử lý tại chỗ:
+
+```json
+"silenceMeta": {
+  "timeoutSeconds": 5,
+  "message": "Mình dừng lại đây, lúc nào cần bạn chạm nút trợ lý một cái là mình bật lại liền.",
+  "closeAssistant": true
+}
+```
+
+App cần: sau khi mở mic, nếu quá `timeoutSeconds` giây mà ASR không ra chữ nào → **đọc `message` qua TTS**, rồi đóng trợ lý nếu `closeAssistant = true`. Không phải gọi API thêm lần nào.
+
+Nhờ vậy câu thoại vẫn do server quyết định (sửa là có hiệu lực ngay, không cần build lại APK) mà app không tốn round-trip.
+
+> **Riêng `type: "confirm"` KHÔNG có `silenceMeta`** — lúc chờ xác nhận thì dùng `confirmMeta` (`retryPrompt` / `cancelMessage` / `maxSilenceRetries` / `silenceTimeoutSeconds`): im lặng lần 1–2 thì đọc `retryPrompt` và mở mic lại, đủ `maxSilenceRetries` lần thì đọc `cancelMessage` và xoá `pending`.
+
+App vẫn có thể gửi request với `text: ""` như cũ (server trả `fallback` + `shouldCloseAssistant`) — hai cách đều được hỗ trợ, `silenceMeta` chỉ giúp bỏ bớt round-trip.
+
 ##### 2.3 `type: "noop"` — Lệnh OK nhưng app đang ở trạng thái đó rồi
 
 ```json
