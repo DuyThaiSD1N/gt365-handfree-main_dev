@@ -939,7 +939,7 @@ function App() {
       case 'PLAY_FRIENDS_CONTENT':
         return radioPlaying
           ? pool([
-            'Đài đang phát {channelName} rồi mà, bạn muốn đổi kênh khác không?',
+            'Nội dung số đang phát {channelName} rồi mà, bạn muốn đổi kênh khác không?',
             'Mình vẫn đang phát {channelName} cho bạn đó, bạn cần đổi gì không?',
             '{channelName} đang chạy từ nãy rồi nè, bạn muốn chỉnh tiếng hay đổi kênh?',
           ])
@@ -947,7 +947,7 @@ function App() {
       case 'PAUSE_RADIO':
         return !radioPlaying
           ? pool([
-            'Đài đang tắt sẵn rồi đó, bạn muốn mình mở lại không?',
+            'Nội dung số đang tắt sẵn rồi đó, bạn muốn mình mở lại không?',
             'Mình tắt radio từ nãy rồi mà, bạn có cần bật lại không nhé?',
           ])
           : null;
@@ -962,8 +962,8 @@ function App() {
       case 'OPEN_RADIO_SCREEN':
         return screen === 'radio'
           ? pool([
-            'Bạn đang ở màn Radio rồi đó, chọn kênh nào nghe nhé?',
-            'Mình thấy bạn đang ở Radio mà, bạn muốn nghe gì?',
+            'Bạn đang ở màn Nội dung số rồi đó, chọn kênh nào nghe nhé?',
+            'Mình thấy bạn đang ở Nội dung số mà, bạn muốn nghe gì?',
           ])
           : null;
       case 'OPEN_UTILITIES_SCREEN':

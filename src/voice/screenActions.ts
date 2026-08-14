@@ -31,7 +31,7 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'SHOW_HELP',
     feedback: [
       'Mình có thể bật/tắt cảnh báo vi phạm, báo kẹt xe, tai nạn, hoặc đọc cảnh báo phía trước cho bạn nha.',
-      'Bạn có thể bảo mình bật/tắt cảnh báo, báo kẹt xe, tai nạn, hoặc mở radio, tiện ích nha.',
+      'Bạn có thể bảo mình bật/tắt cảnh báo, báo kẹt xe, tai nạn, hoặc mở nội dung số, tiện ích nha.',
     ],
   },
   {
@@ -40,7 +40,7 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'SHOW_HELP',
     feedback: [
       'Mình có thể mở kênh nào bạn cần, hoặc chuyển kênh tiếp theo cho bạn nha.',
-      'Bạn có thể bảo mình mở kênh nào đó, hoặc nói "kênh tiếp theo", "tạm dừng radio" nha.',
+      'Bạn có thể bảo mình mở kênh nào đó, hoặc nói "kênh tiếp theo", "tạm dừng nội dung số" nha.',
       'Bạn cứ nói tên kênh muốn nghe, hoặc bảo mình "chuyển kênh" là được nhé.',
     ],
   },
@@ -76,8 +76,8 @@ export const screenActions: ScreenAction[] = [
     screen: 'notifications',
     actionCode: 'SHOW_HELP',
     feedback: [
-      'Mình có thể giúp bạn quay về trang chủ, mở radio, hoặc vào tiện ích nha.',
-      'Bạn có thể bảo mình về trang chủ, mở các mục khác như radio, tiện ích nha.',
+      'Mình có thể giúp bạn quay về trang chủ, mở nội dung số, hoặc vào tiện ích nha.',
+      'Bạn có thể bảo mình về trang chủ, mở các mục khác như nội dung số, tiện ích nha.',
     ],
   },
   {
@@ -168,10 +168,10 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'OPEN_RADIO_SCREEN',
     nextScreen: 'radio',
     feedback: [
-      'Mình mở Radio cho bạn rồi đó, bạn muốn nghe kênh nào mình bật liền cho nhé?',
-      'Radio đây rồi nè, bạn cứ đọc tên kênh hoặc chương trình, mình mở liền cho.',
-      'Mình vào Radio cho bạn đây, bạn muốn nghe gì cứ bảo mình nha.',
-      'Mình mở Radio cho bạn rồi ạ, bạn nói tên kênh là mình thao tác liền cho.',
+      'Mình mở Nội dung số cho bạn rồi đó, bạn muốn nghe kênh nào mình bật liền cho nhé?',
+      'Nội dung số đây rồi nè, bạn cứ đọc tên kênh hoặc chương trình, mình mở liền cho.',
+      'Mình vào Nội dung số cho bạn đây, bạn muốn nghe gì cứ bảo mình nha.',
+      'Mình mở Nội dung số cho bạn rồi ạ, bạn nói tên kênh là mình thao tác liền cho.',
     ],
   },
   {
@@ -476,10 +476,10 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'PLAY_RADIO',
     nextScreen: 'radio',
     feedback: [
-      'Mình đã bật Radio GT365 cho bạn rồi đây, bạn nghe thoải mái nha.',
-      'Mình mở Radio GT365 lên cho bạn rồi đó, vừa nghe vừa lái cẩn thận nhé.',
-      'Radio GT365 đang chạy cho bạn rồi nè, cần đổi kênh cứ bảo mình.',
-      'Mình bật Radio GT365 cho bạn rồi ạ, có gì cứ kêu mình một tiếng.',
+      'Mình đã bật Nội dung số GT365 cho bạn rồi đây, bạn nghe thoải mái nha.',
+      'Mình mở Nội dung số GT365 lên cho bạn rồi đó, vừa nghe vừa lái cẩn thận nhé.',
+      'Nội dung số GT365 đang chạy cho bạn rồi nè, cần đổi kênh cứ bảo mình.',
+      'Mình bật Nội dung số GT365 cho bạn rồi ạ, có gì cứ kêu mình một tiếng.',
     ],
   },
   {
@@ -487,10 +487,10 @@ export const screenActions: ScreenAction[] = [
     screen: 'all',
     actionCode: 'PAUSE_RADIO',
     feedback: [
-      'Mình tắt đài cho bạn rồi nhé.',
-      'Mình dừng Radio cho bạn đây ạ.',
-      'Mình tạm dừng đài cho bạn rồi đó, cần nghe lại cứ bảo mình.',
-      'Mình tắt Radio cho bạn rồi nè, có gì cứ kêu mình.',
+      'Mình tắt Nội dung số cho bạn rồi nhé.',
+      'Mình dừng Nội dung số cho bạn đây ạ.',
+      'Mình tạm dừng Nội dung số cho bạn rồi đó, cần nghe lại cứ bảo mình.',
+      'Mình tắt Nội dung số cho bạn rồi nè, có gì cứ kêu mình.',
     ],
   },
   {
@@ -608,9 +608,9 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'LEAVE_RADIO_ROOM',
     nextScreen: 'radio',
     feedback: [
-      'Mình rời phòng cho bạn rồi nhé, quay về Radio đây.',
+      'Mình rời phòng cho bạn rồi nhé, quay về Nội dung số đây.',
       'Mình thoát phòng trò chuyện cho bạn đây ạ.',
-      'Mình về lại màn Radio cho bạn rồi đó.',
+      'Mình về lại màn Nội dung số cho bạn rồi đó.',
     ],
     requiresConfirmation: true,
     confirmPrompt: ['Mình rời phòng cho bạn nhé?', 'Mình rời phòng cho bạn nha ạ?'],

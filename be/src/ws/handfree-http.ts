@@ -617,7 +617,7 @@ function buildActionResponse(
       type: 'clarification',
       reply: channels.length > 0
         ? `Không tìm thấy chuyên mục "${askedName}". Bạn có thể nói "Chuyên mục tiếp theo" hoặc "Liệt kê chuyên mục cho tôi" để mình hỗ trợ tiếp nha.`
-        : `Mình chưa có danh sách kênh nào, bạn vào màn Radio để xem nhé.`,
+        : `Mình chưa có danh sách kênh nào, bạn vào màn Nội dung số để xem nhé.`,
       action: { code: action.actionCode, nextScreen: action.nextScreen },
       openMicAfterReply: true,
       meta,
@@ -778,12 +778,12 @@ function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string | strin
   switch (actionCode) {
     case 'PLAY_RADIO':
       return ctx.channelName
-        ? 'Đài đang phát {channelName} rồi mà, bạn muốn đổi kênh khác không?'
-        : 'Đài đang phát rồi mà, bạn muốn đổi kênh khác không?';
+        ? 'Nội dung số đang phát {channelName} rồi mà, bạn muốn đổi kênh khác không?'
+        : 'Nội dung số đang phát rồi mà, bạn muốn đổi kênh khác không?';
     case 'PAUSE_RADIO':
-      return 'Đài đang tắt rồi đó, cần nghe lại bạn cứ bảo mình nhé.';
+      return 'Nội dung số đang tắt rồi đó, cần nghe lại bạn cứ bảo mình nhé.';
     case 'OPEN_RADIO_SCREEN':
-      return 'Mình đang ở màn Radio rồi mà, bạn cần gì cứ nói nhé.';
+      return 'Mình đang ở màn Nội dung số rồi mà, bạn cần gì cứ nói nhé.';
     case 'OPEN_HOME_SCREEN':
       return 'Mình đang ở trang chủ rồi đó, bạn cần gì nữa cứ bảo.';
     case 'OPEN_UTILITIES_SCREEN':
@@ -1249,7 +1249,7 @@ export function handfreeCommandHandler(): RequestHandler {
     ) {
       const channels = (parsed.channels && parsed.channels.length > 0) ? parsed.channels : getRadioChannels();
       const channelNames = channels.map(c => c.name).join(', ');
-      const clarificationPrompt = `Đài đang phát rồi mà, bạn muốn đổi kênh khác không? Hiện có ${channels.length} kênh: ${channelNames}.`;
+      const clarificationPrompt = `Nội dung số đang phát rồi mà, bạn muốn đổi kênh khác không? Hiện có ${channels.length} kênh: ${channelNames}.`;
       const response = buildClarificationResponse(
         action,
         parsed,
@@ -1262,7 +1262,7 @@ export function handfreeCommandHandler(): RequestHandler {
     }
 
     if (action.actionCode === 'PAUSE_RADIO' && parsed.radioPlaying === false) {
-      const clarificationPrompt = 'Đài đang tắt sẵn rồi đó, bạn muốn mình mở lại không?';
+      const clarificationPrompt = 'Nội dung số đang tắt sẵn rồi đó, bạn muốn mình mở lại không?';
       const response = buildClarificationResponse(
         action,
         parsed,
