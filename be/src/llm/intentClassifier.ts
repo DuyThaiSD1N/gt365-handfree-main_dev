@@ -33,6 +33,8 @@ function getQwenClient(): OpenAI | null {
   cachedQwenClient = new OpenAI({
     apiKey: process.env.LLM_API_KEY || 'none',
     baseURL: normalizeOpenAiCompatibleBaseUrl(baseURL),
+    // WAF của llm.tiengnoi.vn chặn User-Agent mặc định "OpenAI/JS ..." của SDK
+    defaultHeaders: { 'User-Agent': 'gt365-voice-bridge' },
   });
   return cachedQwenClient;
 }
@@ -90,7 +92,9 @@ async function callQwen(
     temperature: 0.1,
     max_tokens: 200,
     response_format: { type: 'json_object' },
-  }, { timeout: timeoutMs });
+    // vLLM/Qwen3: tắt reasoning, nếu không content rỗng vì token dồn hết vào field reasoning
+    chat_template_kwargs: { enable_thinking: false },
+  } as any, { timeout: timeoutMs });
 
   const content = completion.choices[0]?.message?.content ?? '';
   if (!content) throw new Error('Qwen primary trả content rỗng');
