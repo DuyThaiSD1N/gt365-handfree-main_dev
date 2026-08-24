@@ -777,9 +777,11 @@ function buildNoopResponse(
 function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string | string[] {
   switch (actionCode) {
     case 'PLAY_RADIO':
+    case 'PLAY_ROAD_STORY':
+    case 'PLAY_FRIENDS_CONTENT':
       return ctx.channelName
-        ? 'Nội dung số đang phát {channelName} rồi mà, bạn muốn đổi kênh khác không?'
-        : 'Nội dung số đang phát rồi mà, bạn muốn đổi kênh khác không?';
+        ? 'Nội dung số đang phát {channelName} rồi đó, muốn đổi kênh bạn cứ nói tên kênh nhé.'
+        : 'Nội dung số đang phát rồi đó, muốn đổi kênh bạn cứ nói tên kênh nhé.';
     case 'PAUSE_RADIO':
       return 'Nội dung số đang tắt rồi đó, cần nghe lại bạn cứ bảo mình nhé.';
     case 'OPEN_RADIO_SCREEN':
@@ -1241,35 +1243,26 @@ export function handfreeCommandHandler(): RequestHandler {
       return;
     }
 
-    // Clarification nếu state invalid: bật radio khi đã bật (chỉ cho PLAY_RADIO chung chung,
-    // KHÔNG áp dụng cho PLAY_RADIO_BY_NAME vì đó là yêu cầu đổi kênh cụ thể → thực thi bình thường)
+    // No-op nếu state invalid: bật radio khi đã bật (chỉ cho PLAY_RADIO chung chung,
+    // KHÔNG áp dụng cho PLAY_RADIO_BY_NAME vì đó là yêu cầu đổi kênh cụ thể → thực thi bình thường).
+    // Chỉ báo lại trạng thái, KHÔNG hỏi lại — câu hỏi confirm chỉ dành cho bật/tắt cảnh báo.
     if (
       (action.actionCode === 'PLAY_RADIO' || action.actionCode === 'PLAY_ROAD_STORY' || action.actionCode === 'PLAY_FRIENDS_CONTENT') &&
       parsed.radioPlaying === true
     ) {
-      const channels = (parsed.channels && parsed.channels.length > 0) ? parsed.channels : getRadioChannels();
-      const channelNames = channels.map(c => c.name).join(', ');
-      const clarificationPrompt = `Nội dung số đang phát rồi mà, bạn muốn đổi kênh khác không? Hiện có ${channels.length} kênh: ${channelNames}.`;
-      const response = buildClarificationResponse(
-        action,
-        parsed,
-        clarificationPrompt,
-        { intentCode, confidence, source, latencyMs: Date.now() - startedAt },
-      );
-      console.log(`[handfree] ✓ clarification ${intentCode} (radio already playing)`);
+      const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
+      setCached(key, response);
+      console.log(`[handfree] ✓ noop ${intentCode} (radio already playing)`);
       send(response);
       return;
     }
 
+    // Tắt radio khi radio đang tắt sẵn → chỉ báo lại trạng thái, không hỏi "muốn mở lại không?"
+    // (hỏi mà user đáp "Không" sẽ rơi vào fallback vì clarification không có pending).
     if (action.actionCode === 'PAUSE_RADIO' && parsed.radioPlaying === false) {
-      const clarificationPrompt = 'Nội dung số đang tắt sẵn rồi đó, bạn muốn mình mở lại không?';
-      const response = buildClarificationResponse(
-        action,
-        parsed,
-        clarificationPrompt,
-        { intentCode, confidence, source, latencyMs: Date.now() - startedAt },
-      );
-      console.log(`[handfree] ✓ clarification ${intentCode} (radio already paused)`);
+      const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
+      setCached(key, response);
+      console.log(`[handfree] ✓ noop ${intentCode} (radio already paused)`);
       send(response);
       return;
     }
