@@ -27,7 +27,9 @@ export function matchTranscript(
     || normalized.includes('danh sach')
     || normalized.includes('co nhung')
     || normalized.includes('ke ten')
-    || normalized.includes('co may');
+    || normalized.includes('co may')
+    || normalized.includes('radio co kenh')
+    || normalized.includes('cac kenh radio');
 
   if (normalized.length < 2) {
     return { type: 'noMatch' };
@@ -37,6 +39,12 @@ export function matchTranscript(
 
   for (const command of commands) {
     if (!screenAllowed(command.allowedScreens, screen, assistantState)) {
+      continue;
+    }
+
+    // Câu hỏi liệt kê ("radio có kênh nào", "liệt kê kênh"...) không được rơi vào
+    // RADIO_PLAY_BY_NAME — giống logic hasListKeyword ở matcher backend.
+    if (command.intentCode === 'RADIO_PLAY_BY_NAME' && hasListSignal) {
       continue;
     }
 

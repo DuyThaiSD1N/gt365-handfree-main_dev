@@ -14,6 +14,8 @@ const LIST_CHANNEL_KEYWORDS = [
   // Lưu ý: input đã bị stripTrailingFillers cắt "nào" ở cuối, nên từ khoá phải viết ở dạng ĐÃ CẮT
   // ("nội dung số có kênh nào" → "noi dung so co kenh").
   'co kenh nao', 'noi dung so co gi', 'noi dung so co kenh',
+  // Hỏi danh sách theo từ "radio" ("radio có kênh nào" → "radio co kenh")
+  'radio co kenh', 'radio co gi', 'cac kenh radio',
 ];
 
 // Các từ khóa chỉ rõ ý chuyển kênh next/prev (không phải mở kênh theo tên)
