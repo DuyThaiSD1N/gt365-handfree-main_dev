@@ -29,8 +29,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'home',
     actionCode: 'SHOW_HELP',
     feedback: [
-      'Mình có thể bật/tắt cảnh báo vi phạm, báo kẹt xe, tai nạn, hoặc đọc cảnh báo phía trước cho bạn nha.',
-      'Bạn có thể bảo mình bật/tắt cảnh báo, báo kẹt xe, tai nạn, hoặc mở nội dung số, tiện ích nha.',
+      'Mình có thể giúp bạn bật/tắt cảnh báo giao thông hoặc bật/tắt radio nha.',
     ],
   },
   {
@@ -38,9 +37,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'radio',
     actionCode: 'SHOW_HELP',
     feedback: [
-      'Mình có thể mở kênh nào bạn cần, hoặc chuyển kênh tiếp theo cho bạn nha.',
-      'Bạn có thể bảo mình mở kênh nào đó, hoặc nói "kênh tiếp theo", "tạm dừng nội dung số" nha.',
-      'Bạn cứ nói tên kênh muốn nghe, hoặc bảo mình "chuyển kênh" là được nhé.',
+      'Mình có thể giúp bạn mở chuyên mục radio mà bạn muốn nghe nha.',
     ],
   },
   {
@@ -48,8 +45,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'utilities',
     actionCode: 'SHOW_HELP',
     feedback: [
-      'Mình có thể giúp bạn mở Bảo hiểm xe cơ giới, tra cứu phạt nguội, hoặc tìm trạm xăng nha.',
-      'Bạn có thể bảo mình mở bảo hiểm xe, tra phạt nguội, hoặc gọi cứu hộ nha.',
+      'Mình có thể giúp bạn mở Bảo hiểm xe cơ giới nha.',
     ],
   },
   {
@@ -58,7 +54,6 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'SHOW_HELP',
     feedback: [
       'Mình có thể giúp bạn bật/tắt cảnh báo giao thông hoặc mở các mục cài đặt tài khoản nha.',
-      'Bạn có thể bảo mình bật/tắt cảnh báo, mở cài đặt hiển thị, hoặc quản lý quyền truy cập nha.',
     ],
   },
   {
@@ -84,8 +79,7 @@ export const screenActions: ScreenAction[] = [
     screen: 'fineLookup',
     actionCode: 'SHOW_HELP',
     feedback: [
-      'Mình có thể giúp bạn kiểm tra phạt nguội ngay, chọn xe, hoặc xem lịch sử tra cứu nha.',
-      'Bạn có thể bảo mình kiểm tra ngay, đổi xe, hoặc xem tất cả kết quả nha.',
+      'Mình có thể giúp bạn tra cứu lỗi vi phạm của phương tiện của bạn nha.',
     ],
   },
   {
@@ -850,8 +844,7 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'OPEN_DISPLAY_SETTINGS',
     nextScreen: 'displaySettings',
     feedback: [
-      'Mình mở Thông báo và Hiển thị cho bạn rồi nhé, bạn muốn chỉnh gì cứ nói, mình thao tác cho.',
-      'Cài đặt Thông báo và Hiển thị đây ạ, bạn cứ bảo mình bật tắt gì là mình làm liền.',
+      'Mình đã đưa bạn vào mục Thông báo & Hiển thị nha, bạn cần gì tiếp cứ bảo mình.',
     ],
   },
   {
@@ -860,8 +853,7 @@ export const screenActions: ScreenAction[] = [
     actionCode: 'OPEN_PERMISSION_SETTINGS',
     nextScreen: 'permissionSettings',
     feedback: [
-      'Mình mở Quản lý quyền truy cập cho bạn rồi nhé, bạn cần bật tắt quyền nào cứ nói nha.',
-      'Quyền truy cập đây rồi ạ, bạn cứ bảo mình bật hay tắt là mình thao tác liền cho.',
+      'Mình đã đưa bạn vào mục Quản lý quyền truy cập nha.',
     ],
   },
 

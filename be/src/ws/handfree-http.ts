@@ -288,6 +288,7 @@ type HandfreeResponse =
       target?: 'hotspotAlertEnabled'; // toggle app cần ghi
       value?: boolean;                // giá trị cần ghi vào toggle đó
     };
+    openMicAfterReply?: boolean; // true = đọc xong reply thì mở mic lại (LISTENING)
     meta: ResponseMeta;
     state?: ResponseState;
     silenceMeta?: SilenceMeta;
@@ -602,6 +603,8 @@ function parseBody(raw: any): ParsedBody | null {
   };
 }
 
+const OPEN_MIC_AFTER_ACTIONS = new Set<string>(['SHOW_HELP', 'OPEN_DISPLAY_SETTINGS']);
+
 function buildActionResponse(
   action: ScreenAction,
   p: ParsedBody,
@@ -712,6 +715,9 @@ function buildActionResponse(
         ? { target: 'hotspotAlertEnabled' as const, value: hotspotValue }
         : {}),
     },
+    // Đọc xong thì mở mic chờ user nói lệnh tiếp luôn (BOT = LISTENING):
+    // SHOW_HELP (đọc gợi ý lệnh), OPEN_DISPLAY_SETTINGS (vào Thông báo & Hiển thị)
+    ...(OPEN_MIC_AFTER_ACTIONS.has(action.actionCode) ? { openMicAfterReply: true } : {}),
     meta,
   };
 }
