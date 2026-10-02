@@ -1,6 +1,22 @@
 [
   {
+    "id": "ca89cdbd-49b4-40cd-8e01-f95401fa9749",
+    "name": "Luật & hành chính công"
+  },
+  {
     "id": "6bba1d8d-b9b5-45e3-a2d6-bdba8d669599",
     "name": "Chuyện đường phố"
+  },
+  {
+    "id": "66fa411a-bbb3-44bd-93d3-5f7f6b23e32f",
+    "name": "Tài chính kinh doanh"
+  },
+  {
+    "id": "5666d0bb-dc22-4b0a-958f-059be67f4c9a",
+    "name": "Đồng hành cùng bạn"
+  },
+  {
+    "id": "0998e110-7823-45ce-9b77-4c837e68fc2d",
+    "name": "Tin tức tổng hợp"
   }
 ]

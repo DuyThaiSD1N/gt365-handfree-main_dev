@@ -19,6 +19,8 @@ export const commands: CommandDefinition[] = [
       'gt365 ơi',
       'trợ lý ơi',
       'alo gt365',
+      'alo 365',
+      'hey 365',
       'này gt365',
       'mở trợ lý',
       'bật trợ lý',

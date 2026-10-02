@@ -20,6 +20,12 @@ const phoneticAliases: Array<[RegExp, string]> = [
   [/\bgi\s*ti\s*365\b/g, 'gt365'],
   [/\bgt\s*ba\s*sau\s*nam\b/g, 'gt365'],
 
+  // Wake word "Alo 365" / "Hey 365": ASR hay ra "a lô ba sáu năm", "hây ba trăm sáu mươi lăm"...
+  [/\bba\s+tram\s+sau\s+(?:muoi|chuc)\s+(?:lam|nam)\b/g, '365'],
+  [/\bba\s+sau\s+(?:lam|nam)\b/g, '365'],
+  [/\b(?:a\s+lo|a\s+no|alo|alow|allo|hello)\s+365\b/g, 'alo 365'],
+  [/\b(?:hey|hay|hei|he|hai|ey)\s+365\b/g, 'hey 365'],
+
   // trợ lý: ASR đôi khi đọc "chợ lý" / "trợ lí"
   [/\bcho\s+ly\b/g, 'tro ly'],
   [/\btro\s+li\b/g, 'tro ly'],

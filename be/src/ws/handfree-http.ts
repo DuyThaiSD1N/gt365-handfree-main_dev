@@ -163,7 +163,29 @@ function findChannelByName(
   return channels[bestIndex];
 }
 
-const NOOP_WINDOW_MS = 30_000;
+function containsChannelName(
+  text: string,
+  overrideChannels?: { id: string; name: string }[] | null,
+): boolean {
+  const channels = (overrideChannels && overrideChannels.length > 0)
+    ? overrideChannels
+    : getRadioChannels();
+  const normalizedText = normalizeVietnamese(text);
+  return channels.some((ch) => {
+    const normalizedName = normalizeVietnamese(ch.name);
+    return normalizedName.length > 0 && normalizedText.includes(normalizedName);
+  });
+}
+
+// Ghi kênh BE trả về vào log để đối chiếu với kênh app thực sự phát
+function describeChannel(response: HandfreeResponse, currentChannelId?: string | null): string {
+  if (!('action' in response) || !response.action) return '';
+  const action = response.action as { channelId?: string; channelName?: string };
+  if (!action.channelId) return '';
+  const current = currentChannelId === undefined ? '' : ` (current=${currentChannelId ?? 'none'})`;
+  return ` → channel="${action.channelName}" id=${action.channelId}${current}`;
+}
+
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT = 60;
@@ -777,6 +799,7 @@ function buildNoopResponse(
 function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string | string[] {
   switch (actionCode) {
     case 'PLAY_RADIO':
+    case 'PLAY_RADIO_BY_NAME':
     case 'PLAY_ROAD_STORY':
     case 'PLAY_FRIENDS_CONTENT':
       return ctx.channelName
@@ -824,7 +847,7 @@ function noopReplyFor(actionCode: ActionCode, ctx: ReplyContext): string | strin
     case 'SHOW_HELP':
       return 'Mình vừa hướng dẫn rồi mà, bạn muốn nghe lại hay cần hỗ trợ gì khác không?';
     default:
-      return 'Mình thấy bạn vừa làm rồi mà, không cần làm lại đâu nha.';
+      return 'Mục này đang như bạn muốn rồi đó, bạn cần gì nữa cứ nói nhé.';
   }
 }
 
@@ -858,12 +881,6 @@ function isAlertStateNoop(actionCode: ActionCode, hotspotAlertEnabled: boolean |
   return typeof wanted === 'boolean' && wanted === hotspotAlertEnabled;
 }
 
-function isRecentSameAction(action: ScreenAction, recent: RecentActionItem[]): boolean {
-  if (recent.length === 0) return false;
-  const last = recent[recent.length - 1]; // phần tử mới nhất
-  return last.actionCode === action.actionCode && last.msAgo < NOOP_WINDOW_MS;
-}
-
 function getCommandByIntent(intentCode: IntentCode) {
   return commands.find((c) => c.intentCode === intentCode);
 }
@@ -885,29 +902,17 @@ async function classifyViaLlm(
       ...baseCandidates.filter((c) => c.intentCode !== 'RADIO_PLAY_BY_NAME'),
       {
         intentCode: 'RADIO_PLAY_BY_NAME' as IntentCode,
+        // Ít mẫu/kênh để kênh nào cũng có mặt (trước đây 18 mẫu/kênh + slice(0, 40)
+        // làm rơi mất các kênh từ thứ 3 trở đi).
         phrases: channels.flatMap((ch) => {
           const name = ch.name.toLowerCase();
           return [
+            name,
             `mở kênh ${name}`,
-            `bật kênh ${name}`,
-            `nghe kênh ${name}`,
-            `phát kênh ${name}`,
             `chuyển kênh ${name}`,
-            `đổi kênh ${name}`,
-            `mở ${name}`,
-            `bật ${name}`,
             `nghe ${name}`,
-            `cho tôi nghe ${name}`,
-            `cho nghe ${name}`,
-            `mở kênh ${name} cho tôi`,
-            `bật kênh ${name} cho tôi`,
-            `cho tôi kênh ${name}`,
-            `bật cho tôi kênh ${name}`,
-            `chuyển sang kênh ${name}`,
-            `đổi sang kênh ${name}`,
-            `vào kênh ${name}`,
           ];
-        }).slice(0, 40), // Tăng từ 30 → 40 để cover nhiều biến thể hơn
+        }).slice(0, 80),
       },
     ]
     : baseCandidates;
@@ -982,7 +987,7 @@ export function handfreeCommandHandler(): RequestHandler {
     const key = cacheKey(parsed);
     const cached = getCached(key);
     if (cached) {
-      console.log(`[handfree] ✓ cache "${parsed.text}" screen=${parsed.screen} type=${cached.type}`);
+      console.log(`[handfree] ✓ cache "${parsed.text}" screen=${parsed.screen} type=${cached.type}${describeChannel(cached)}`);
       send(cached);
       return;
     }
@@ -1140,6 +1145,12 @@ export function handfreeCommandHandler(): RequestHandler {
       confidence = Math.min(1, match.candidate.confidence);
       source = 'matcher';
       console.log(`[handfree] matcher: "${parsed.text}" → ${intentCode} (conf=${confidence.toFixed(2)}, phrase="${match.candidate.phrase}")`);
+    } else if (containsChannelName(parsed.text, parsed.channels)) {
+      // User nói thẳng tên kênh (vd "tài chính kinh doanh") không kèm "kênh" → mở luôn, khỏi gọi LLM
+      intentCode = 'RADIO_PLAY_BY_NAME';
+      confidence = 0.9;
+      source = 'matcher';
+      console.log(`[handfree] ✓ channel-name match RADIO_PLAY_BY_NAME "${parsed.text}"`);
     } else if (isLlmEnabled()) {
       const llm = await classifyViaLlm(parsed.text, parsed.screen, parsed.recentActions, parsed.channels);
       llmLatency = llm.latencyMs;
@@ -1179,6 +1190,15 @@ export function handfreeCommandHandler(): RequestHandler {
           source = 'matcher';
           console.log(`[handfree] ✓ heuristic match RADIO_PLAY_BY_NAME (channel keyword, no match found)`);
         }
+      } else {
+        // Không có từ "kênh" nhưng khớp gần tên kênh (vd "kinh doanh", ASR méo nhẹ)
+        const fuzzyChannel = findChannelByName(parsed.text, parsed.channels);
+        if (fuzzyChannel) {
+          intentCode = 'RADIO_PLAY_BY_NAME';
+          confidence = 0.75;
+          source = 'matcher';
+          console.log(`[handfree] ✓ heuristic fuzzy RADIO_PLAY_BY_NAME for channel="${fuzzyChannel.name}"`);
+        }
       }
     }
 
@@ -1217,18 +1237,18 @@ export function handfreeCommandHandler(): RequestHandler {
       return;
     }
 
-    // No-op nếu vừa thực hiện cùng action gần đây.
-    if (isRecentSameAction(action, parsed.recentActions)) {
-      const response = buildNoopResponse(
-        parsed,
-        intentCode,
-        action.actionCode,
-        Date.now() - startedAt,
-      );
-      setCached(key, response);
-      console.log(`[handfree] ✓ noop ${intentCode} action=${action.actionCode}`);
-      send(response);
-      return;
+    // KHÔNG noop chỉ vì user vừa nói cùng lệnh: user hỏi lại thường là vì chưa nghe rõ/chưa hiểu
+    // → thực hiện/trả lời lại bình thường. Chỉ noop khi trạng thái thật đã đúng (các nhánh bên dưới).
+    // Gọi đúng kênh đang phát → báo đang phát kênh đó rồi, không chuyển lại.
+    if (action.actionCode === 'PLAY_RADIO_BY_NAME' && parsed.radioPlaying !== false && parsed.currentChannelId) {
+      const requested = findChannelByName(parsed.text, parsed.channels);
+      if (requested && requested.id === parsed.currentChannelId) {
+        parsed.context.channelName = requested.name;
+        const response = buildNoopResponse(parsed, intentCode, action.actionCode, Date.now() - startedAt);
+        console.log(`[handfree] ✓ noop ${intentCode} (channel "${requested.name}" already playing)`);
+        send(response);
+        return;
+      }
     }
 
     // No-op cảnh báo: chỉ check hotspotAlert (cảnh báo điểm nóng), không quan tâm speedAlert.
@@ -1291,7 +1311,8 @@ export function handfreeCommandHandler(): RequestHandler {
     });
     setCached(key, response);
     console.log(
-      `[handfree] ✓ action ${intentCode}→${action.actionCode} conf=${confidence.toFixed(2)} src=${source} (${response.meta.latencyMs}ms)`,
+      `[handfree] ✓ action ${intentCode}→${action.actionCode} conf=${confidence.toFixed(2)} src=${source} (${response.meta.latencyMs}ms)` +
+        describeChannel(response, parsed.currentChannelId),
     );
     send(response);
   };
