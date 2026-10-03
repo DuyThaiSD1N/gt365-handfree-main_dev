@@ -134,7 +134,9 @@ App cần:
 1. **Đọc `reply` qua TTS** ngay.
 2. **Thực thi `action.code`** (xem §5 cho mapping action → UI behavior).
 3. Nếu có `action.nextScreen` → navigate sang màn hình đó.
-4. Nếu `openMicAfterReply = true` → đọc xong `reply` thì mở mic lại (quay về `listening`). Hiện dùng cho `SHOW_HELP` (user nói "trợ giúp" / "có thể nói gì" / "hướng dẫn lệnh"): bot đọc gợi ý lệnh theo màn hiện tại rồi chờ user nói lệnh. Và `OPEN_DISPLAY_SETTINGS` (vào Thông báo & Hiển thị): bot đọc xong chờ user nói lệnh tiếp.
+4. Nếu `openMicAfterReply = true` → đọc xong `reply` thì mở mic lại (quay về `listening`). Hiện dùng cho `OPEN_DISPLAY_SETTINGS` (vào Thông báo & Hiển thị): bot đọc xong chờ user nói lệnh tiếp.
+
+> Lệnh trợ giúp (user nói "trợ giúp" / "có thể nói gì" / "hướng dẫn lệnh") trả về `type: "noop"` (không có `action`), `meta.intentCode = "ASSISTANT_HELP"`, `reply` là câu gợi ý lệnh theo màn hiện tại, `noopMeta.openMicAfterReply = true` → app đọc `reply` rồi mở mic chờ lệnh (xem §2.3).
 
 ##### 2.1.1 `action.target` / `action.value` / `state` — đồng bộ tên field với app
 

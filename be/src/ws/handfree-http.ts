@@ -610,6 +610,17 @@ function buildActionResponse(
   p: ParsedBody,
   meta: ResponseMeta,
 ): HandfreeResponse {
+  // SHOW_HELP trả dạng noop: app Android chưa map action SHOW_HELP (báo "chưa hỗ trợ lệnh"),
+  // còn noop thì app đã xử lý sẵn: chỉ đọc reply, không thực thi gì, noopMeta.openMicAfterReply → LISTENING
+  if (action.actionCode === 'SHOW_HELP') {
+    return {
+      type: 'noop',
+      reply: interpolate(pickFeedback(action.feedback, p.text), p.context),
+      noopMeta: buildNoopMeta(action.actionCode),
+      meta,
+    };
+  }
+
   // Inject availableChannels cho LIST_RADIO_CHANNELS từ file JSON
   if (action.actionCode === 'LIST_RADIO_CHANNELS') {
     const channels = (p.channels && p.channels.length > 0) ? p.channels : getRadioChannels();
@@ -633,15 +644,12 @@ function buildActionResponse(
         meta,
       };
     }
-    // Không tìm được → nói tên kênh user hỏi, gợi ý 2 lệnh thay thế, mở mic lại
+    // Không tìm được → báo không tìm thấy, mở mic lại để user chọn chuyên mục khác (BOT = LISTENING)
     const channels = (p.channels && p.channels.length > 0) ? p.channels : getRadioChannels();
-    // Trích tên kênh user đang hỏi (bỏ stopwords như "mở kênh", "bật kênh"...)
-    const topicTokens = toTopicTokens(p.text);
-    const askedName = topicTokens.length > 0 ? topicTokens.join(' ') : p.text.trim();
     return {
       type: 'clarification',
       reply: channels.length > 0
-        ? `Không tìm thấy chuyên mục "${askedName}". Bạn có thể nói "Chuyên mục tiếp theo" hoặc "Liệt kê chuyên mục cho tôi" để mình hỗ trợ tiếp nha.`
+        ? 'Mình không tìm thấy chuyên mục này. Bạn vui lòng chọn một chuyên mục khác nha.'
         : `Mình chưa có danh sách kênh nào, bạn vào màn Nội dung số để xem nhé.`,
       action: { code: action.actionCode, nextScreen: action.nextScreen },
       openMicAfterReply: true,

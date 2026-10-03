@@ -713,6 +713,9 @@ export const commands: CommandDefinition[] = [
     phrases: [
       'mở quyền truy cập',
       'quản lý quyền truy cập',
+      'mở cài đặt quyền truy cập',
+      'cài đặt quyền truy cập',
+      'vào cài đặt quyền truy cập',
       'cài đặt quyền',
       'mở quyền',
       'quản lý quyền',
